@@ -979,6 +979,30 @@ cardos_compute_signature(sc_card_t *card, const u8 *data, size_t datalen,
 }
 
 static int
+cardos_decipher(struct sc_card *card,
+		const u8 * crgram, size_t crgram_len,
+		u8 * out, size_t outlen)
+{
+	int r;
+	u8 *tmp = NULL;
+	size_t tmp_len = crgram_len;
+
+	assert(card != NULL && crgram != NULL && out != NULL);
+	LOG_FUNC_CALLED(card->ctx);
+
+	tmp = malloc(tmp_len);
+	r = iso_ops->decipher(card, crgram, crgram_len, tmp, tmp_len);
+
+	/* add bogus padding, because the card removes it */
+	if (sc_pkcs1_encode(card->ctx, SC_ALGORITHM_RSA_HASH_NONE|SC_ALGORITHM_RSA_PAD_PKCS1,
+			tmp, r, out, &outlen, crgram_len) != SC_SUCCESS)
+		LOG_FUNC_RETURN(card->ctx, SC_ERROR_INTERNAL);
+	out[1] = 0x02; /* this is encryption-padding */
+
+	LOG_FUNC_RETURN(card->ctx, outlen);
+}
+
+static int
 cardos_lifecycle_get(sc_card_t *card, int *mode)
 {
 	sc_apdu_t	apdu;
@@ -1278,6 +1302,7 @@ static struct sc_card_driver * sc_get_driver(void)
 	cardos_ops.set_security_env = cardos_set_security_env;
 	cardos_ops.restore_security_env = cardos_restore_security_env;
 	cardos_ops.compute_signature = cardos_compute_signature;
+	cardos_ops.decipher = cardos_decipher;
 
 	cardos_ops.list_files = cardos_list_files;
 	cardos_ops.check_sw = cardos_check_sw;
