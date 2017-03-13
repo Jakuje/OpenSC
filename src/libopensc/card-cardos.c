@@ -992,10 +992,22 @@ cardos_decipher(struct sc_card *card,
 
 	tmp = malloc(tmp_len);
 	r = iso_ops->decipher(card, crgram, crgram_len, tmp, tmp_len);
+	if (r < 0)
+		LOG_FUNC_RETURN(card->ctx, r);
+
+	if (card->type != SC_CARD_TYPE_CARDOS_V5_3) {
+		/* XXX */
+		memcpy(out, tmp, tmp_len);
+		outlen = tmp_len;
+		free(tmp);
+		LOG_FUNC_RETURN(card->ctx, r);
+	}
 
 	/* add bogus padding, because the card removes it */
-	if (sc_pkcs1_encode(card->ctx, SC_ALGORITHM_RSA_HASH_NONE|SC_ALGORITHM_RSA_PAD_PKCS1,
-			tmp, r, out, &outlen, crgram_len) != SC_SUCCESS)
+	r = sc_pkcs1_encode(card->ctx, SC_ALGORITHM_RSA_HASH_NONE|SC_ALGORITHM_RSA_PAD_PKCS1,
+		tmp, r, out, &outlen, crgram_len);
+	free(tmp);
+	if (r != SC_SUCCESS)
 		LOG_FUNC_RETURN(card->ctx, SC_ERROR_INTERNAL);
 	out[1] = 0x02; /* this is encryption-padding */
 
