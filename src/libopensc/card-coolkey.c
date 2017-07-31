@@ -977,6 +977,8 @@ static int coolkey_apdu_io(sc_card_t *card, int cla, int ins, int p1, int p2,
 		sendbuflen += nonce_len;
 		sendbuf =rsendbuf;
 	}
+	if (sendbuflen > 255) /* max for SHORT APDU */
+		cse |= SC_APDU_EXT;
 
 	sc_format_apdu(card, &apdu, cse, ins, p1, p2);
 
