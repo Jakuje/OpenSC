@@ -853,6 +853,11 @@ static int cac_get_challenge(sc_card_t *card, u8 *rnd, size_t len)
 		memcpy(rnd, rbufp, n);
 		len -= n;
 		rnd += n;
+		/* avoid infinite cycle */
+		if (n == 0) {
+			r = SC_ERROR_INTERNAL;
+			break;
+		}
 	}
 
 	r = sc_unlock(card);
