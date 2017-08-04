@@ -1354,6 +1354,12 @@ static int cac_process_CCC(sc_card_t *card, cac_private_data_t *priv)
 	if (r < 0)
 		goto done;
 
+	/* Empty CCC does not look valid ... progress to different card driver */
+	if (tl_len == 0 || val_len == 0) {
+		r = SC_ERROR_INVALID_CARD;
+		goto done;
+	}
+
 	r = cac_parse_CCC(card, priv, tl, tl_len, val, val_len);
 done:
 	if (tl)
