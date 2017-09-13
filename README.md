@@ -1,3 +1,5 @@
+# This is just a CI mirror of the [official OpenSC repository on GitHub](https://github.com/OpenSC/OpenSC/).
+
 # OpenSC documentation
 
 Wiki is [available online](https://github.com/OpenSC/OpenSC/wiki)
