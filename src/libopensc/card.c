@@ -1059,6 +1059,10 @@ static int match_atr_table(sc_context_t *ctx, struct sc_atr_table *table, struct
 
 		sc_log(ctx, "ATR try : %s", tatr);
 
+		if (strncmp(tatr, "all", 4) == 0) {
+			return i;
+		}
+
 		if (tatr_len != fix_hex_len) {
 			sc_log(ctx, "ignored - wrong length");
 			continue;

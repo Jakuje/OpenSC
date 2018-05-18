@@ -212,6 +212,8 @@ app default {
 	# $ opensc-tool --list-drivers
 
 	# Generic format: card_atr <hex encoded ATR (case-sensitive!)>
+	# Additionally, "all" wildcard keyword can be used, which matches
+	# all the cards.
 
 	# New card entry for the flex card driver
 	# card_atr 3b:f0:0d:ca:fe {

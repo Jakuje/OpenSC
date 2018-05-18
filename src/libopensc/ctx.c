@@ -595,7 +595,7 @@ static int load_card_atrs(sc_context_t *ctx)
 
 			driver = NULL;
 
-			if (strlen(atr) < 4)
+			if (strlen(atr) < 4 && strcmp(atr, "all") != 0)
 				continue;
 
 			/* The interesting part. If there's no card
