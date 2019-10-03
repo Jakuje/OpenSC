@@ -10,7 +10,9 @@ before_script:
   - cd src/tests/p11test/
 variables:
   CAC_SLOT_ID: 8
+  CAC_PIN: 77777777
   COOLKEY_SLOT_ID: 4
+  COOLKEY_PIN: redhat
 
 .job_base: &base_job
   artifacts:
@@ -28,9 +30,6 @@ variables:
       - src/tests/p11test/*.log
       - src/tests/p11test/*.json
       - tests/test-suite.log
-  cache:
-    paths:
-      - src/tests/p11test/*.json
 
 
 ################################
@@ -41,10 +40,9 @@ Build and Test CAC:
   only:
     - cac
   script:
-    - ./p11test -s $CAC_SLOT_ID -p 77777777 -o cac.json | tee cac.log
-    - if [[ -f cac_old.json ]]; then diff -u3 cac_old.json cac.json; fi
-    - cp cac.json cac_old.json
-    # cache the results for the next run
+    - ./p11test -s $CAC_SLOT_ID -p $CAC_PIN -o cac.json | tee cac.log
+    # Compre with reference values in git
+    - diff -u3 cac_ref.json cac.json
   tags:
     - cac
     - linux
@@ -73,10 +71,9 @@ Build and Test Coolkey:
   only:
     - coolkey
   script:
-    - ./p11test -s $COOLKEY_SLOT_ID -p redhat -o coolkey.json | tee coolkey.log
-    - if [[ -f coolkey_old.json ]]; then diff -u3 coolkey_old.json coolkey.json; fi
-    - cp coolkey.json coolkey_old.json
-    # cache the results for the next run
+    - ./p11test -s $COOLKEY_SLOT_ID -p $COOLKEY_PIN -o coolkey.json | tee coolkey.log
+    # Compre with reference values in git
+    - diff -u3 coolkey_ref.json coolkey.json
   tags:
     - coolkey
     - linux
