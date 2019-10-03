@@ -23,7 +23,7 @@ variables:
   <<: *base_job
   artifacts:
     expire_in: '1 week'
-    when: on_failure
+    when: always
     paths:
       - src/tests/p11test/*.log
       - src/tests/p11test/*.json
