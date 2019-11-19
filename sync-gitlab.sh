@@ -2,6 +2,21 @@
 
 # Congigure to start every day, for example the foolowing in 'crontab -e'
 # 00 2 * * * /root/sync-gitlab.sh >> /root/sync.log
+#
+# Install dependencies
+# dnf install make pcsc-lite-devel readline-devel openssl-devel /usr/bin/xsltproc docbook-style-xsl autoconf automake libtool gcc desktop-file-utils bash-completion libcmocka-devel valgrind
+#
+# Turn off selinux
+# setenforce 0
+#
+# Turn off smart card access control by creating a file /etc/polkit-1/rules.d/00-smartcards.rules with following content
+# polkit.addRule(function(action, subject) {
+#     if (action.id == "org.debian.pcsc-lite.access_pcsc" ||
+#          action.id == "org.debian.pcsc-lite.access_card") {
+#             return polkit.Result.YES;
+#     }
+# });
+
 
 echo "::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::"
 echo ":::: Running sync of current upstream OpenSC to my fork in GitLab ::::"
