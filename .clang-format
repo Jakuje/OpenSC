@@ -10,7 +10,7 @@ AlignTrailingComments: true
 BreakBeforeBinaryOperators: NonAssignment
 
 MaxEmptyLinesToKeep: 1
-ColumnLimit: 140
+ColumnLimit: 110
 ReflowComments: false
 
 BraceWrapping:   
@@ -26,3 +26,4 @@ BraceWrapping:
   BeforeElse:      false
   IndentBraces:    false
 SortIncludes:    true
+AlignConsecutiveMacros: true
