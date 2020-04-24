@@ -202,6 +202,15 @@ before_script:
       sudo /etc/init.d/pcscd restart;
     fi
 
+  # clang-format to check format of new changes
+  - if [ -z "$HOST" -a "${DO_COVERITY_SCAN}" != "yes" -a -z "${DO_SIMULATION}" ]; then
+      sudo apt install clang-format;
+      curl -Ls "https://raw.githubusercontent.com/llvm-mirror/clang/c510fac5695e904b43d5bf0feee31cc9550f110e/tools/clang-format/git-clang-format" -o "bin/git-clang-format";
+      chmod +x /bin/git-clang-format;
+      export PATH="$(pwd)/bin:$PATH";
+      git clone --branch v1.2.1 https://github.com/material-foundation/clang-format-ci.git;
+    fi
+
 script:
   - if [ "${DO_COVERITY_SCAN}" != "yes" ]; then
       if [ "${TRAVIS_OS_NAME}" = "osx" ]; then
@@ -212,6 +221,9 @@ script:
     fi
   - if [ -z "$HOST" -a "${DO_COVERITY_SCAN}" != "yes" -a -z "$DO_SIMULATION" ]; then
       make check && make dist;
+      if [ -n "$TRAVIS_PULL_REQUEST_SLUG" ]; then
+        ./clang-format-ci/check-pull-request.sh --api_token "$GH_TOKEN" --repo "$TRAVIS_PULL_REQUEST_SLUG" --pr "$TRAVIS_PULL_REQUEST" --commit "$TRAVIS_PULL_REQUEST_SHA" --target_branch "$TRAVIS_BRANCH";
+      fi
     fi
   - if [ ! -z "$HOST" -a "${DO_COVERITY_SCAN}" != "yes" ]; then
       make install;
