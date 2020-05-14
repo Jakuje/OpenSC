@@ -20,6 +20,8 @@ BasedOnStyle: LLVM
 
 # OpenSC modifications
 IndentWidth: 8
+# This is ugly, but hopefully allowing to use tabs for continuation indentation
+ContinuationIndentWidth: 8
 UseTab: ForContinuationAndIndentation
 AlignConsecutiveMacros: true
 ColumnLimit: 110
