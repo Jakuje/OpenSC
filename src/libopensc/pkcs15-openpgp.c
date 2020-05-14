@@ -53,6 +53,7 @@ typedef struct _pgp_pin_cfg {
 	int		do_index;
 } pgp_pin_cfg_t;
 
+// clang-format off
 /* OpenPGP cards v1:
  * "Signature PIN2 & "Encryption PIN" are two different PINs - not sync'ed by hardware
  */
@@ -69,6 +70,7 @@ static const pgp_pin_cfg_t	pin_cfg_v2[3] = {
 	{ "User PIN (sig)", 0x01, PGP_USER_PIN_FLAGS,  6, 0 },	// used for PSO:CDS
 	{ "Admin PIN",      0x03, PGP_ADMIN_PIN_FLAGS, 8, 2 }
 };
+// clang-format on
 
 static struct sc_object_id curve25519_oid = {{1, 3, 6, 1, 4, 1, 3029, 1, 5, 1, -1}};
 
@@ -93,18 +95,20 @@ typedef	struct _pgp_key_cfg {
 	int		pubkey_usage;
 } pgp_key_cfg_t;
 
+// clang-format off
 static const pgp_key_cfg_t key_cfg[3] = {
 	{ "Signature key",      "B601", 1, PGP_SIG_PRKEY_USAGE,  PGP_SIG_PUBKEY_USAGE  },
 	{ "Encryption key",     "B801", 2, PGP_ENC_PRKEY_USAGE,  PGP_ENC_PUBKEY_USAGE  },
 	{ "Authentication key", "A401", 2, PGP_AUTH_PRKEY_USAGE | PGP_ENC_PRKEY_USAGE, PGP_AUTH_PUBKEY_USAGE | PGP_ENC_PUBKEY_USAGE }
 };
-
+// clang-format on
 
 typedef struct _pgp_manuf_map {
 	unsigned short		id;
 	const char	*name;
 } pgp_manuf_map_t;
 
+// clang-format off
 static const pgp_manuf_map_t manuf_map[] = {
 	{ 0x0001, "PPC Card Systems"		},
 	{ 0x0002, "Prism"			},
@@ -132,6 +136,7 @@ static const pgp_manuf_map_t manuf_map[] = {
 	{ 0xffff, "test card"			},
 	{ 0, NULL }
 };
+// clang-format on
 
 /*
  * This function pretty much follows what find_tlv in the GNUpg
