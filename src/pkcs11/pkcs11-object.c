@@ -282,7 +282,7 @@ C_GetAttributeValue(CK_SESSION_HANDLE hSession,	/* the session's handle */
 	}
 
 out:
-	name = lookup_enum (RV_T, rv );
+	name = lookup_enum(RV_T, rv);
 	if (name)
 		sc_log(context, "C_GetAttributeValue(hSession=0x%lx, hObject=0x%lx) = %s",
 			hSession, hObject, name);

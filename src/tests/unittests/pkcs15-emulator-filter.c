@@ -19,15 +19,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "torture.h"
 #include "libopensc/pkcs15-emulator-filter.c"
+#include "torture.h"
 
 int func(sc_pkcs15_card_t *card, struct sc_aid *aid) {
-	(void) card;
-	(void) aid;
+	(void)card;
+	(void)aid;
 	return SC_SUCCESS;
 }
 
+// clang-format off
 struct sc_pkcs15_emulator_handler builtin[] = {
 	{ "openpgp",	&func },
 	{ "starcert",	&func },
@@ -39,6 +40,7 @@ struct sc_pkcs15_emulator_handler old[] = {
 	{ "jcop",		&func },
 	{ NULL, NULL }
 };
+// clang-format on
 
 /* add_emul */
 static void torture_null_add_emul(void **state)
@@ -236,7 +238,7 @@ static void torture_non_existing(void **state)
 {
 	struct _sc_pkcs15_emulators filtered_emulators;
 	int rv;
-	scconf_list list =  { NULL, "non" };
+	scconf_list list = { NULL, "non" };
 	filtered_emulators.ccount = 0;
 
 	rv = set_emulators(NULL, &filtered_emulators, &list, builtin, old);
@@ -248,7 +250,7 @@ static void torture_internal_only(void **state)
 {
 	struct _sc_pkcs15_emulators filtered_emulators;
 	int i, rv;
-	scconf_list list =  { NULL, "internal" };
+	scconf_list list = { NULL, "internal" };
 	filtered_emulators.ccount = 0;
 
 	rv = set_emulators(NULL, &filtered_emulators, &list, builtin, old);
@@ -265,7 +267,7 @@ static void torture_old_only(void **state)
 {
 	struct _sc_pkcs15_emulators filtered_emulators;
 	int i, rv;
-	scconf_list list =  { NULL, "old" };
+	scconf_list list = { NULL, "old" };
 	filtered_emulators.ccount = 0;
 
 	rv = set_emulators(NULL, &filtered_emulators, &list, builtin, old);
@@ -281,7 +283,7 @@ static void torture_internal_name(void **state)
 {
 	struct _sc_pkcs15_emulators filtered_emulators;
 	int rv;
-	scconf_list list =  { NULL, strdup(builtin[0].name) };
+	scconf_list list = { NULL, strdup(builtin[0].name) };
 	filtered_emulators.ccount = 0;
 
 	rv = set_emulators(NULL, &filtered_emulators, &list, builtin, old);
@@ -294,7 +296,7 @@ static void torture_old_name(void **state)
 {
 	struct _sc_pkcs15_emulators filtered_emulators;
 	int rv;
-	scconf_list list =  { NULL, strdup(old[0].name) };
+	scconf_list list = { NULL, strdup(old[0].name) };
 	filtered_emulators.ccount = 0;
 
 	rv = set_emulators(NULL, &filtered_emulators, &list, builtin, old);
@@ -307,8 +309,8 @@ static void torture_internal_and_name(void **state)
 {
 	struct _sc_pkcs15_emulators filtered_emulators;
 	int i, rv;
-	scconf_list list2 =  { NULL, "cardos" };
-	scconf_list list1 =  { &list2, "internal" };
+	scconf_list list2 = { NULL, "cardos" };
+	scconf_list list1 = { &list2, "internal" };
 	filtered_emulators.ccount = 0;
 
 	rv = set_emulators(NULL, &filtered_emulators, &list1, builtin, old);
@@ -324,8 +326,8 @@ static void torture_name_and_internal(void **state)
 {
 	struct _sc_pkcs15_emulators filtered_emulators;
 	int rv;
-	scconf_list list2 =  { NULL, "internal" };
-	scconf_list list1 =  { &list2, "starcert" };
+	scconf_list list2 = { NULL, "internal" };
+	scconf_list list1 = { &list2, "starcert" };
 	filtered_emulators.ccount = 0;
 
 	rv = set_emulators(NULL, &filtered_emulators, &list1, builtin, old);
@@ -339,8 +341,8 @@ static void torture_internal_and_nonexisting(void **state)
 {
 	struct _sc_pkcs15_emulators filtered_emulators;
 	int i, rv;;
-	scconf_list list2 =  { NULL, "non" };
-	scconf_list list1 =  { &list2, "internal" };
+	scconf_list list2 = { NULL, "non" };
+	scconf_list list1 = { &list2, "internal" };
 	filtered_emulators.ccount = 0;
 
 	rv = set_emulators(NULL, &filtered_emulators, &list1, builtin, old);
@@ -356,8 +358,8 @@ static void torture_nonexisting_and_internal(void **state)
 {
 	struct _sc_pkcs15_emulators filtered_emulators;
 	int i, rv;
-	scconf_list list2 =  { NULL, "internal" };
-	scconf_list list1 =  { &list2, "non" };
+	scconf_list list2 = { NULL, "internal" };
+	scconf_list list1 = { &list2, "non" };
 	filtered_emulators.ccount = 0;
 
 	rv = set_emulators(NULL, &filtered_emulators, &list1, builtin, old);

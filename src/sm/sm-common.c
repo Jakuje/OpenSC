@@ -40,8 +40,8 @@
 #error "Need OpenSSL"
 #endif
 
-#include <openssl/evp.h>
 #include <openssl/des.h>
+#include <openssl/evp.h>
 #include <openssl/sha.h>
 
 #include "libopensc/opensc.h"
@@ -131,25 +131,24 @@ DES_3cbc_encrypt(DES_cblock *input, DES_cblock *output, long length,
 OSSL_PROVIDER *legacy_provider = NULL;
 #endif
 
-
 DES_LONG
 DES_cbc_cksum_3des_emv96(const unsigned char *in, DES_cblock *output,
 			   long length, unsigned char *key,
 			   const_DES_cblock *ivec)
 {
-	register long l=length;
+	register long l = length;
 	unsigned char *out = &(*output)[0];
 	const unsigned char *iv = &(*ivec)[0];
 #if OPENSSL_VERSION_NUMBER < 0x30000000L
-	register DES_LONG tout0,tout1,tin0,tin1;
+	register DES_LONG tout0, tout1, tin0, tin1;
 	DES_LONG tin[2];
 	DES_cblock kk, k2;
-	DES_key_schedule ks,ks2;
+	DES_key_schedule ks, ks2;
 
 	memcpy(&kk, key, 8);
 	memcpy(&k2, key + 8, 8);
-	DES_set_key_unchecked(&kk,&ks);
-	DES_set_key_unchecked(&k2,&ks2);
+	DES_set_key_unchecked(&kk, &ks);
+	DES_set_key_unchecked(&k2, &ks2);
 
 	c2l(iv,tout0);
 	c2l(iv,tout1);
@@ -207,7 +206,7 @@ DES_cbc_cksum_3des_emv96(const unsigned char *in, DES_cblock *output,
 	cctx = EVP_CIPHER_CTX_new();
 	if (l > 8) {
 		if (legacy_provider == NULL) {
-			 legacy_provider = OSSL_PROVIDER_load(NULL, "legacy");
+			legacy_provider = OSSL_PROVIDER_load(NULL, "legacy");
 		}
 		if (!EVP_EncryptInit_ex2(cctx, EVP_des_cbc(), key, iv, NULL)) {
 			EVP_CIPHER_CTX_free(cctx);
@@ -245,7 +244,7 @@ DES_cbc_cksum_3des_emv96(const unsigned char *in, DES_cblock *output,
 	}
 	if (out != NULL) {
 		memcpy(out, tmpout, 4);
-		memcpy(out+4, outv+4, 4);
+		memcpy(out + 4, outv + 4, 4);
 	}
 	EVP_CIPHER_CTX_free(cctx);
 	return ((outv[7] << 0L)  & 0x000000FF) |
@@ -261,19 +260,19 @@ DES_cbc_cksum_3des(const unsigned char *in, DES_cblock *output,
 		       long length, unsigned char *key,
 		       const_DES_cblock *ivec)
 {
-	register long l=length;
+	register long l = length;
 	unsigned char *out = &(*output)[0];
 	const unsigned char *iv = &(*ivec)[0];
 #if OPENSSL_VERSION_NUMBER < 0x30000000L
-	register DES_LONG tout0,tout1,tin0,tin1;
+	register DES_LONG tout0, tout1, tin0, tin1;
 	DES_LONG tin[2];
 	DES_cblock kk, k2;
-	DES_key_schedule ks,ks2;
+	DES_key_schedule ks, ks2;
 
 	memcpy(&kk, key, 8);
 	memcpy(&k2, key + 8, 8);
-	DES_set_key_unchecked(&kk,&ks);
-	DES_set_key_unchecked(&k2,&ks2);
+	DES_set_key_unchecked(&kk, &ks);
+	DES_set_key_unchecked(&k2, &ks2);
 
 	c2l(iv, tout0);
 	c2l(iv, tout1);
@@ -346,7 +345,6 @@ DES_cbc_cksum_3des(const unsigned char *in, DES_cblock *output,
 #endif
 }
 
-
 int
 sm_encrypt_des_ecb3(unsigned char *key, unsigned char *data, int data_len,
 		unsigned char **out, int *out_len)
@@ -359,7 +357,6 @@ sm_encrypt_des_ecb3(unsigned char *key, unsigned char *data, int data_len,
 	EVP_CIPHER_CTX *cctx = NULL;
 	int tmplen;
 #endif
-
 
 	if (!out || !out_len)
 		return -1;
@@ -414,12 +411,12 @@ sm_decrypt_des_cbc3(struct sc_context *ctx, unsigned char *key,
 		unsigned char **out, size_t *out_len)
 {
 #if OPENSSL_VERSION_NUMBER < 0x30000000L
-	DES_cblock kk,k2;
-	DES_key_schedule ks,ks2;
-	DES_cblock icv={0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
+	DES_cblock kk, k2;
+	DES_key_schedule ks, ks2;
+	DES_cblock icv = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 	size_t st;
 #else
-	unsigned char icv[] = {0x00 ,0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+	unsigned char icv[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 	EVP_CIPHER_CTX *cctx = NULL;
 	int tmplen;
 #endif
@@ -439,10 +436,10 @@ sm_decrypt_des_cbc3(struct sc_context *ctx, unsigned char *key,
 	memcpy(&kk, key, 8);
 	memcpy(&k2, key + 8, 8);
 
-	DES_set_key_unchecked(&kk,&ks);
-	DES_set_key_unchecked(&k2,&ks2);
+	DES_set_key_unchecked(&kk, &ks);
+	DES_set_key_unchecked(&k2, &ks2);
 
-	for (st=0; st<data_len; st+=8)
+	for (st = 0; st < data_len; st += 8)
 		DES_3cbc_encrypt((DES_cblock *)(data + st),
 				(DES_cblock *)(*out + st), 8, &ks, &ks2, &icv, DES_DECRYPT);
 #else

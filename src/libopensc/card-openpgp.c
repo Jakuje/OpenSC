@@ -86,8 +86,7 @@ static struct sc_card_driver pgp_drv = {
 	NULL, 0, NULL
 };
 
-
-static pgp_ec_curves_t  ec_curves_openpgp34[] = {
+static pgp_ec_curves_t ec_curves_openpgp34[] = {
 	/* OpenPGP 3.4+ Ed25519 and Curve25519 */
 	{{{1, 3, 6, 1, 4, 1, 3029, 1, 5, 1, -1}}, 256}, /* curve25519 for encryption => CKK_EC_MONTGOMERY */
 	{{{1, 3, 6, 1, 4, 1, 11591, 15, 1, -1}}, 256}, /* ed25519 for signatures => CKK_EC_EDWARDS */
@@ -137,7 +136,6 @@ static pgp_blob_t	*pgp_new_blob(sc_card_t *, pgp_blob_t *, unsigned int, sc_file
 static void		pgp_free_blob(pgp_blob_t *);
 static int		pgp_get_pubkey(sc_card_t *, unsigned int, u8 *, size_t);
 static int		pgp_get_pubkey_pem(sc_card_t *, unsigned int, u8 *, size_t);
-
 
 // clang-format off
 static pgp_do_info_t	pgp1x_objects[] = {	/* OpenPGP card spec 1.1 */
@@ -627,7 +625,7 @@ pgp_parse_algo_attr_blob(sc_card_t *card, const pgp_blob_t *blob,
 				 * it is not part of OID */
 				if (blob->len < 2)
 					return SC_ERROR_INCORRECT_PARAMETERS;
-				if (blob->data[blob->len-1] == SC_OPENPGP_KEYFORMAT_EC_STD)
+				if (blob->data[blob->len - 1] == SC_OPENPGP_KEYFORMAT_EC_STD)
 					key_info->u.ec.oid_len = blob->len - 2;
 				else
 					key_info->u.ec.oid_len = blob->len - 1;

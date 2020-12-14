@@ -28,12 +28,12 @@
 #include <stdio.h>
 #include <assert.h>
 
+#include "asn1.h"
 #include "common/libscdl.h"
 #include "internal.h"
-#include "asn1.h"
-#include "pkcs15.h"
-#include "pkcs15-syn.h"
 #include "pkcs15-emulator-filter.h"
+#include "pkcs15-syn.h"
+#include "pkcs15.h"
 
 // clang-format off
 struct sc_pkcs15_emulator_handler builtin_emulators[] = {
@@ -60,7 +60,6 @@ struct sc_pkcs15_emulator_handler builtin_emulators[] = {
 	{ "cardos",     sc_pkcs15emu_cardos_init_ex	},
 	{ NULL, NULL }
 };
-// clang-format on
 
 struct sc_pkcs15_emulator_handler old_emulators[] = {
 	{ "westcos",	sc_pkcs15emu_westcos_init_ex	},
@@ -69,7 +68,8 @@ struct sc_pkcs15_emulator_handler old_emulators[] = {
 	{ "actalis",	sc_pkcs15emu_actalis_init_ex	},
 	{ "tccardos",	sc_pkcs15emu_tccardos_init_ex	},
 	{ NULL, NULL }
-};	
+};
+// clang-format on
 
 static int parse_emu_block(sc_pkcs15_card_t *, struct sc_aid *, scconf_block *);
 static sc_pkcs15_df_t * sc_pkcs15emu_get_df(sc_pkcs15_card_t *p15card,
@@ -146,7 +146,7 @@ sc_pkcs15_bind_synthetic(sc_pkcs15_card_t *p15card, struct sc_aid *aid)
 		if (builtin_enabled && list) {
 			/* filter enabled emulation drivers from conf file */
 			struct _sc_pkcs15_emulators filtered_emulators;
-			struct sc_pkcs15_emulator_handler** lst;
+			struct sc_pkcs15_emulator_handler **lst;
 			int ret;
 
 			filtered_emulators.ccount = 0;
@@ -155,7 +155,8 @@ sc_pkcs15_bind_synthetic(sc_pkcs15_card_t *p15card, struct sc_aid *aid)
 				lst = filtered_emulators.list_of_handlers;
 
 				if (ret == SC_ERROR_TOO_MANY_OBJECTS)
-					sc_log(ctx, "trying first %d emulators from conf file", SC_MAX_PKCS15_EMULATORS);
+					sc_log(ctx, "trying first %d emulators from conf file",
+					       SC_MAX_PKCS15_EMULATORS);
 
 				for (i = 0; lst[i]; i++) {
 					sc_log(ctx, "trying %s", lst[i]->name);

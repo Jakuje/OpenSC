@@ -366,15 +366,13 @@ static int rtecp_logout(sc_card_t *card)
 	SC_FUNC_RETURN(card->ctx, SC_LOG_DEBUG_VERBOSE, r);
 }
 
-static int rtecp_set_security_env(	struct sc_card *card,
-									const struct sc_security_env *env,
-									int se_num)
+static int rtecp_set_security_env(struct sc_card *card, const struct sc_security_env *env, int se_num)
 {
 	struct sc_security_env se_env;
-	if(!env)
+	if (!env)
 		return SC_ERROR_INVALID_ARGUMENTS;
 
-	se_env= *env;
+	se_env = *env;
 	se_env.flags &= ~SC_SEC_ENV_FILE_REF_PRESENT;
 	return iso_ops->set_security_env(card, &se_env, se_num);
 }

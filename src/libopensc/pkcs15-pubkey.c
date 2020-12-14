@@ -1515,8 +1515,7 @@ sc_pkcs15_pubkey_from_spki_fields(struct sc_context *ctx, struct sc_pkcs15_pubke
 		}
 		memcpy(pubkey->u.ec.ecpointQ.value, pk.value, pk.len);
 		pubkey->u.ec.ecpointQ.len = pk.len;
-	} else if (pk_alg.algorithm == SC_ALGORITHM_EDDSA ||
-		   pk_alg.algorithm == SC_ALGORITHM_XEDDSA) {
+	} else if (pk_alg.algorithm == SC_ALGORITHM_EDDSA || pk_alg.algorithm == SC_ALGORITHM_XEDDSA) {
 		/* EDDSA/XEDDSA public key is not encapsulated into BIT STRING -- it's a BIT STRING */
 		pubkey->u.eddsa.pubkey.value = malloc(pk.len);
 		memcpy(pubkey->u.eddsa.pubkey.value, pk.value, pk.len);

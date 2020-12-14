@@ -911,7 +911,7 @@ static int cwa_verify_internal_auth(sc_card_t * card,
 	/* OK: now we have SIGMIN in buf1 */
 	/* check if SIGMIN data matches SIG or N.ICC-SIG */
 	/* evaluate DS[SK.ICC.AUTH](SIG) trying to decrypt with icc pubk */
-	len3 = RSA_public_encrypt(len1, buf1, buf3, (RSA *) icc_pubkey, RSA_NO_PADDING);
+	len3 = RSA_public_encrypt(len1, buf1, buf3, (RSA *)icc_pubkey, RSA_NO_PADDING);
 	if (len3 <= 0)
 		goto verify_nicc_sig;	/* evaluate N.ICC-SIG and retry */
 	res = cwa_compare_signature(buf3, len3, ifdbuf);

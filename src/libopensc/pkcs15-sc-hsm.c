@@ -1026,7 +1026,8 @@ static int sc_pkcs15emu_sc_hsm_init (sc_pkcs15_card_t * p15card)
 		r = sc_pin_cmd(card, &pindata, NULL);
 	}
 
-	if ((r != SC_ERROR_DATA_OBJECT_NOT_FOUND) && (r != SC_ERROR_INCORRECT_PARAMETERS) && (r != SC_ERROR_REF_DATA_NOT_USABLE))
+	if ((r != SC_ERROR_DATA_OBJECT_NOT_FOUND) && (r != SC_ERROR_INCORRECT_PARAMETERS) &&
+	    (r != SC_ERROR_REF_DATA_NOT_USABLE))
 		card->caps |= SC_CARD_CAP_PROTECTED_AUTHENTICATION_PATH;
 
 

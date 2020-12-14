@@ -138,7 +138,7 @@ sm_gp_get_cryptogram(unsigned char *session_key,
 	memcpy(block + 8, right, 8);
 	memcpy(block + 16, "\x80\0\0\0\0\0\0\0",8);
 
-	DES_cbc_cksum_3des(block,&cksum, sizeof(block), session_key, &cksum);
+	DES_cbc_cksum_3des(block, &cksum, sizeof(block), session_key, &cksum);
 
 	memcpy(out, cksum, 8);
 

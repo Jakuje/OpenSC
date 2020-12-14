@@ -273,7 +273,6 @@ static sc_ossl_inline void CRYPTO_secure_malloc_done()
 
 #endif /* OPENSSL_VERSION_NUMBER < 0x10100000L */
 
-
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

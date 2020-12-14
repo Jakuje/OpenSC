@@ -22,8 +22,8 @@
 
 #include <errno.h>
 #include <fcntl.h>
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #ifndef _WIN32
@@ -2797,14 +2797,12 @@ static int gen_keypair(CK_SLOT_ID slot, CK_SESSION_HANDLE session,
 	}
 
 	if (opt_always_auth != 0) {
-		FILL_ATTR(privateKeyTemplate[n_privkey_attr], CKA_ALWAYS_AUTHENTICATE,
-				&_true, sizeof(_true));
+		FILL_ATTR(privateKeyTemplate[n_privkey_attr], CKA_ALWAYS_AUTHENTICATE, &_true, sizeof(_true));
 		n_privkey_attr++;
 	}
 
 	if (opt_is_extractable != 0) {
-		FILL_ATTR(privateKeyTemplate[n_privkey_attr], CKA_EXTRACTABLE,
-				&_true, sizeof(_true));
+		FILL_ATTR(privateKeyTemplate[n_privkey_attr], CKA_EXTRACTABLE, &_true, sizeof(_true));
 		n_privkey_attr++;
 	}
 
@@ -3889,14 +3887,14 @@ static int find_object_flags(CK_SESSION_HANDLE sess, uint16_t mf_flags,
 		const unsigned char *id, size_t id_len, int obj_index)
 {
 	int count;
-	char err_key_types[1024] = { 0 };
+	char err_key_types[1024] = {0};
 
 	if (mf_flags & MF_CKO_SECRET_KEY) {
 		count = find_object(sess, CKO_SECRET_KEY, ret, id, id_len, obj_index);
 		if (count)
 			return count;
 
-		strncat(err_key_types, "Secret", sizeof(err_key_types)-1);
+		strncat(err_key_types, "Secret", sizeof(err_key_types) - 1);
 	}
 
 	util_fatal("Could not find key of type: %s", err_key_types);
@@ -7037,6 +7035,7 @@ static void pseudo_randomize(unsigned char *data, size_t dataLen)
 	}
 }
 
+// clang-format off
 static struct mech_info	p11_mechanisms[] = {
       { CKM_RSA_PKCS_KEY_PAIR_GEN,	"RSA-PKCS-KEY-PAIR-GEN", NULL, MF_UNKNOWN },
       { CKM_RSA_PKCS,		"RSA-PKCS",	NULL, MF_UNKNOWN },
@@ -7282,6 +7281,7 @@ static struct mech_info	p11_mgf[] = {
       { CKG_MGF1_SHA512,	"MGF1-SHA512", NULL, MF_MGF },
       { 0, NULL, NULL, MF_UNKNOWN }
 };
+// clang-format on
 
 static struct mech_info p11_profile[] = {
 	{ CKP_INVALID_ID,                "CKP_INVALID_ID",                NULL, MF_UNKNOWN },
@@ -7668,7 +7668,6 @@ static void * test_threads_run(void * pttd)
 			pctest ++;
 		if (*pctest == ':')
 			pctest++;
-
 
 		if (rv != CKR_OK && rv != CKR_CRYPTOKI_ALREADY_INITIALIZED)
 		/* IN C_Initialize with NULL args */

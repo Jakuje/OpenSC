@@ -48,7 +48,7 @@
 #include "internal.h"
 
 static void sc_do_log_va(sc_context_t *ctx, int level, const char *file, int line, const char *func, int color, const char *format, va_list args);
-static int sc_color_fprintf_va(int colors, struct sc_context *ctx, FILE * stream, const char *format, va_list args);
+static int sc_color_fprintf_va(int colors, struct sc_context *ctx, FILE *stream, const char *format, va_list args);
 
 void sc_do_log(sc_context_t *ctx, int level, const char *file, int line, const char *func, const char *format, ...)
 {
@@ -210,7 +210,7 @@ int sc_color_fprintf(int colors, struct sc_context *ctx, FILE * stream, const ch
 	return r;
 }
 
-int sc_color_fprintf_va(int colors, struct sc_context *ctx, FILE * stream, const char *format, va_list args)
+int sc_color_fprintf_va(int colors, struct sc_context *ctx, FILE *stream, const char *format, va_list args)
 {
 	int r;
 #ifdef _WIN32

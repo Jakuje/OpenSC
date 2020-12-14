@@ -690,7 +690,6 @@ int sc_pkcs15_compute_signature(struct sc_pkcs15_card *p15card,
 		}
 	}
 
-
 	/* ECDSA sofware hash has already been done, or is not needed, or card will do hash */
 	/* if card can not do the hash, will use SC_ALGORITHM_ECDSA_RAW */
 	if (obj->type == SC_PKCS15_TYPE_PRKEY_EC) {
@@ -742,10 +741,9 @@ int sc_pkcs15_compute_signature(struct sc_pkcs15_card *p15card,
 	 * But if card is going to do the hash, pass in all the data
 	 */
 	else if (senv.algorithm == SC_ALGORITHM_EC &&
-			(senv.algorithm_flags & SC_ALGORITHM_ECDSA_HASHES) == 0) {
+		 (senv.algorithm_flags & SC_ALGORITHM_ECDSA_HASHES) == 0) {
 		inlen = MIN(inlen, (prkey->field_length+7)/8);
 	}
-
 
 	r = use_key(p15card, obj, &senv, sc_compute_signature, tmp, inlen,
 			out, outlen);

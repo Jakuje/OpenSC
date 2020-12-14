@@ -39,8 +39,8 @@ struct signature_data {
 	struct sc_pkcs11_object *key;
 	struct hash_signature_info *info;
 	sc_pkcs11_operation_t *md;
-	CK_BYTE			*buffer;
-	unsigned int	buffer_len;
+	CK_BYTE *buffer;
+	unsigned int buffer_len;
 };
 
 static struct signature_data *
@@ -75,7 +75,7 @@ signature_data_buffer_append(struct signature_data *data,
 
 	if (data->buffer_len != 0)
 		memcpy(new_buffer, data->buffer, data->buffer_len);
-	memcpy(new_buffer+data->buffer_len, in, in_len);
+	memcpy(new_buffer + data->buffer_len, in, in_len);
 
 	sc_mem_secure_clear_free(data->buffer, data->buffer_len);
 	data->buffer = new_buffer;
@@ -482,12 +482,12 @@ sc_pkcs11_signature_update(sc_pkcs11_operation_t *operation,
 	data = (struct signature_data *) operation->priv_data;
 	if (data->md) {
 		rv = data->md->type->md_update(data->md, pPart, ulPartLen);
-		LOG_FUNC_RETURN(context, (int) rv);
+		LOG_FUNC_RETURN(context, (int)rv);
 	}
 
 	/* This signature mechanism operates on the raw data */
 	rv = signature_data_buffer_append(data, pPart, ulPartLen);
-	LOG_FUNC_RETURN(context, (int) rv);
+	LOG_FUNC_RETURN(context, (int)rv);
 }
 
 static CK_RV
@@ -508,15 +508,15 @@ sc_pkcs11_signature_final(sc_pkcs11_operation_t *operation,
 		if (rv == CKR_BUFFER_TOO_SMALL)
 			rv = CKR_FUNCTION_FAILED;
 		if (rv != CKR_OK)
-			LOG_FUNC_RETURN(context, (int) rv);
+			LOG_FUNC_RETURN(context, (int)rv);
 		rv = signature_data_buffer_append(data, hash, len);
 		if (rv != CKR_OK)
-			LOG_FUNC_RETURN(context, (int) rv);
+			LOG_FUNC_RETURN(context, (int)rv);
 	}
 
 	rv = data->key->ops->sign(operation->session, data->key, &operation->mechanism,
 			data->buffer, data->buffer_len, pSignature, pulSignatureLen);
-	LOG_FUNC_RETURN(context, (int) rv);
+	LOG_FUNC_RETURN(context, (int)rv);
 }
 
 static CK_RV
@@ -569,7 +569,7 @@ static void
 sc_pkcs11_signature_release(sc_pkcs11_operation_t *operation)
 {
 	if (!operation)
-	    return;
+		return;
 	signature_data_release(operation->priv_data);
 }
 
@@ -745,7 +745,7 @@ sc_pkcs11_verify_update(sc_pkcs11_operation_t *operation,
 
 	/* This verification mechanism operates on the raw data */
 	CK_RV rv = signature_data_buffer_append(data, pPart, ulPartLen);
-	LOG_FUNC_RETURN(context, (int) rv);
+	LOG_FUNC_RETURN(context, (int)rv);
 }
 
 static CK_RV

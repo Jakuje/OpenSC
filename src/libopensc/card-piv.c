@@ -1751,7 +1751,7 @@ static int piv_general_mutual_authenticate(sc_card_t *card,
 	/* Remove the encompassing outer TLV of 0x7C and get the data */
 	body = sc_asn1_find_tag(card->ctx, rbuf,
 		r, 0x7C, &body_len);
-	if(!body || rbuf[0] != 0x7C) {
+	if (!body || rbuf[0] != 0x7C) {
 		sc_debug(card->ctx, SC_LOG_DEBUG_VERBOSE, "Could not find outer tag 0x7C in response");
 		r =  SC_ERROR_INVALID_DATA;
 		goto err;
@@ -2370,12 +2370,12 @@ static int piv_validate_general_authentication(sc_card_t *card,
 
 	p2 = rbuf;
 	r = sc_asn1_read_tag(&p2, r, &cla, &tag, &bodylen);
-	if (p2 == NULL || r < 0 || bodylen == 0 || (cla|tag) != 0x7C) {
+	if (p2 == NULL || r < 0 || bodylen == 0 || (cla | tag) != 0x7C) {
 		LOG_TEST_GOTO_ERR(card->ctx, SC_ERROR_INVALID_DATA, "Can't find 0x7C");
 	}
 
 	r = sc_asn1_read_tag(&p2, bodylen, &cla, &tag, &taglen);
-	if (p2 == NULL || r < 0 || taglen == 0 || (cla|tag) != 0x82) {
+	if (p2 == NULL || r < 0 || taglen == 0 || (cla | tag) != 0x82) {
 		LOG_TEST_GOTO_ERR(card->ctx, SC_ERROR_INVALID_DATA, "Can't find 0x82");
 	}
 
@@ -2432,28 +2432,29 @@ piv_compute_signature(sc_card_t *card, const u8 * data, size_t datalen,
 
 		pseq = rbuf;
 		r = sc_asn1_read_tag(&pseq, r, &cla, &tag, &seqlen);
-		if (pseq == NULL || r < 0 || seqlen == 0 || (cla|tag) != 0x30)
+		if (pseq == NULL || r < 0 || seqlen == 0 || (cla | tag) != 0x30)
 			LOG_TEST_GOTO_ERR(card->ctx, SC_ERROR_INVALID_DATA, "Can't find 0x30");
 
 		pint = pseq;
 		pend = pseq + seqlen;
 		for (i = 0; i < 2; i++) {
 			r = sc_asn1_read_tag(&pint, (pend - pint), &cla, &tag, &intlen);
-			if (pint == NULL || r < 0 || intlen == 0 || (cla|tag) != 0x02)
+			if (pint == NULL || r < 0 || intlen == 0 || (cla | tag) != 0x02)
 				LOG_TEST_GOTO_ERR(card->ctx, SC_ERROR_INVALID_DATA, "Can't find 0x02");
 			if (intlen > nLen + 1)
-				LOG_TEST_GOTO_ERR(card->ctx, SC_ERROR_INVALID_DATA,"Signature too long");
+				LOG_TEST_GOTO_ERR(card->ctx, SC_ERROR_INVALID_DATA, "Signature too long");
 
 			ptemp = pint;
 			templen = intlen;
 			if (intlen > nLen) { /* drop leading 00 if present */
 				if (*ptemp != 0x00) {
-					LOG_TEST_GOTO_ERR(card->ctx, SC_ERROR_INVALID_DATA,"Signature too long");
+					LOG_TEST_GOTO_ERR(card->ctx, SC_ERROR_INVALID_DATA,
+					                  "Signature too long");
 				}
 				ptemp++;
 				templen--;
 			}
-			memcpy(out + nLen*i + nLen - templen, ptemp, templen);
+			memcpy(out + nLen * i + nLen - templen, ptemp, templen);
 			pint += intlen; /* next integer */
 			
 		}
@@ -2611,7 +2612,8 @@ static int piv_parse_discovery(sc_card_t *card, u8 * rbuf, size_t rbuflen, int a
 				if (pinp && pinplen == 2) {
 					sc_log(card->ctx, "Discovery pinp flags=0x%2.2x 0x%2.2x",*pinp, *(pinp+1));
 					r = SC_SUCCESS;
-					if ((*pinp & 0x60) == 0x60 && *(pinp+1) == 0x20) { /* use Global pin */
+					if ((*pinp & 0x60) == 0x60 &&
+					    *(pinp + 1) == 0x20) { /* use Global pin */
 						sc_log(card->ctx, "Pin Preference - Global");
 						priv->pin_preference = 0x00;
 					}
