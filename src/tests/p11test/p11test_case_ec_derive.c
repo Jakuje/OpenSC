@@ -21,8 +21,8 @@
 #include "p11test_case_ec_derive.h"
 
 size_t
-pkcs11_derive(test_cert_t *o, token_info_t * info,
-	unsigned char *pub, size_t pub_len, test_mech_t *mech, unsigned char **secret)
+pkcs11_derive(test_cert_t *o, token_info_t *info, unsigned char *pub, size_t pub_len, test_mech_t *mech,
+		unsigned char **secret)
 {
 	CK_RV rv;
 	CK_FUNCTION_LIST_PTR fp = info->function_pointer;
@@ -89,7 +89,8 @@ pkcs11_derive(test_cert_t *o, token_info_t * info,
 	return get_value.ulValueLen;
 }
 
-int test_derive_x25519(test_cert_t *o, token_info_t *info, test_mech_t *mech)
+int
+test_derive_x25519(test_cert_t *o, token_info_t *info, test_mech_t *mech)
 {
 #ifdef EVP_PKEY_X25519
 	unsigned char *secret = NULL, *pkcs11_secret = NULL;
@@ -218,7 +219,8 @@ int test_derive_x25519(test_cert_t *o, token_info_t *info, test_mech_t *mech)
 #endif
 }
 
-int test_derive(test_cert_t *o, token_info_t *info, test_mech_t *mech)
+int
+test_derive(test_cert_t *o, token_info_t *info, test_mech_t *mech)
 {
 	unsigned char *secret = NULL, *pkcs11_secret = NULL;
 	unsigned char *pub = NULL;
@@ -281,8 +283,8 @@ int test_derive(test_cert_t *o, token_info_t *info, test_mech_t *mech)
 	/* Start with key derivation in OpenSSL*/
 	pctx = EVP_PKEY_CTX_new(evp_pkey, NULL);
 	if (pctx == NULL ||
-		EVP_PKEY_derive_init(pctx) != 1 ||
-		EVP_PKEY_derive_set_peer(pctx, o->key) != 1) {
+			EVP_PKEY_derive_init(pctx) != 1 ||
+			EVP_PKEY_derive_set_peer(pctx, o->key) != 1) {
 		debug_print(" [ KEY %s ] Cannot derive key", o->id_str);
 		EVP_PKEY_free(evp_pkey);
 		return 1;
@@ -295,6 +297,7 @@ int test_derive(test_cert_t *o, token_info_t *info, test_mech_t *mech)
 		EVP_PKEY_free(evp_pkey);
 		return 1;
 	}
+
 	/* Allocate the memory for the shared secret */
 	if ((secret = malloc(secret_len)) == NULL) {
 		debug_print(" [ KEY %s ] Failed to allocate memory for secret", o->id_str);
@@ -341,12 +344,12 @@ int test_derive(test_cert_t *o, token_info_t *info, test_mech_t *mech)
 		return 1;
 	}
 #if OPENSSL_VERSION_NUMBER < 0x30000000L
-	pub_len = EC_POINT_point2oct(group, publickey,
-		POINT_CONVERSION_UNCOMPRESSED, pub, pub_len, NULL);
+	pub_len = EC_POINT_point2oct(group, publickey, POINT_CONVERSION_UNCOMPRESSED, pub, pub_len, NULL);
 	EC_GROUP_free(group);
 	if (pub_len == 0) {
 #else
-	if (EVP_PKEY_get_octet_string_param(evp_pkey, OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY, pub, pub_len, NULL) != 1) {
+	if (EVP_PKEY_get_octet_string_param(evp_pkey, OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY, pub, pub_len,
+				NULL) != 1) {
 #endif
 		debug_print(" [ KEY %s ] Cannot get public key", o->id_str);
 		EVP_PKEY_free(evp_pkey);
@@ -372,8 +375,9 @@ int test_derive(test_cert_t *o, token_info_t *info, test_mech_t *mech)
 	return rv;
 }
 
-
-void derive_tests(void **state) {
+void
+derive_tests(void **state)
+{
 	unsigned int i;
 	int j;
 	int errors = 0;
@@ -393,8 +397,7 @@ void derive_tests(void **state) {
 			continue;
 
 		for (j = 0; j < o->num_mechs; j++) {
-			if ((o->mechs[j].usage_flags & CKF_DERIVE) == 0 ||
-				! o->derive_priv)
+			if ((o->mechs[j].usage_flags & CKF_DERIVE) == 0 || !o->derive_priv)
 				continue;
 
 			switch (o->key_type) {
@@ -427,15 +430,15 @@ void derive_tests(void **state) {
 
 		test_cert_t *o = &objects.data[i];
 		printf("\n[%-6s] [%s]\n",
-			o->id_str,
-			o->label);
+				o->id_str,
+				o->label);
 		printf("[ %s ] [%6lu] [  %s  ] [ %s%s ]\n",
-			(o->key_type == CKK_EC ? " EC " :
-				o->key_type == CKK_EC_MONTGOMERY ? "EC_M" : " ?? "),
-			o->bits,
-			o->verify_public == 1 ? " ./ " : "    ",
-			o->derive_pub ? "[./]" : "[  ]",
-			o->derive_priv ? "[./]" : "[  ]");
+				(o->key_type == CKK_EC ? " EC " :
+						o->key_type == CKK_EC_MONTGOMERY ? "EC_M" : " ?? "),
+				o->bits,
+				o->verify_public == 1 ? " ./ " : "    ",
+				o->derive_pub ? "[./]" : "[  ]",
+				o->derive_priv ? "[./]" : "[  ]");
 		if (!o->derive_pub && !o->derive_priv) {
 			printf("  no usable attributes found ... ignored\n");
 			continue;
@@ -450,14 +453,14 @@ void derive_tests(void **state) {
 				continue;
 			}
 			printf("  [ %-22s ] [   %s   ]\n",
-				get_mechanism_name(mech->mech),
-				mech->result_flags & FLAGS_DERIVE ? "[./]" : "    ");
+					get_mechanism_name(mech->mech),
+					mech->result_flags & FLAGS_DERIVE ? "[./]" : "    ");
 			if ((mech->result_flags & FLAGS_DERIVE) == 0)
 				continue; /* skip empty rows for export */
 			P11TEST_DATA_ROW(info, 3,
-				's', o->id_str,
-				's', get_mechanism_name(mech->mech),
-				's', mech->result_flags & FLAGS_DERIVE ? "YES" : "");
+					's', o->id_str,
+					's', get_mechanism_name(mech->mech),
+					's', mech->result_flags & FLAGS_DERIVE ? "YES" : "");
 		}
 	}
 	printf(" Public == Cert -----^            ^\n");

@@ -32,11 +32,11 @@
 #include <openssl/x509v3.h>
 #endif
 
+#include "../pkcs15init/pkcs15-iasecc.h"
+#include "aux-data.h"
+#include "iasecc.h"
 #include "internal.h"
 #include "pkcs15.h"
-#include "../pkcs15init/pkcs15-iasecc.h"
-#include "iasecc.h"
-#include "aux-data.h"
 
 #define IASECC_GEMALTO_MD_APPLICATION_NAME "CSP"
 #define IASECC_GEMALTO_MD_DEFAULT_CONT_LABEL "Default Key Container"
@@ -113,7 +113,7 @@ _iasecc_md_update_keyinfo(struct sc_pkcs15_card *p15card, struct sc_pkcs15_objec
 static int
 _iasecc_cpx_fixup_prkdf(struct sc_pkcs15_card *p15card)
 {
-	struct sc_context * const ctx = p15card->card->ctx;
+	struct sc_context *ctx = p15card->card->ctx;
 	struct sc_pkcs15_object *pkobjs[32];
 	int ii, count;
 	int rv = SC_SUCCESS;
@@ -157,19 +157,17 @@ _iasecc_parse_df(struct sc_pkcs15_card *p15card, struct sc_pkcs15_df *df)
 	rv = sc_pkcs15_parse_df(p15card, df);
 	LOG_TEST_RET(ctx, rv, "DF parse error");
 
-	switch(p15card->card->type) {
-		/* enumerate the IASECC cards that need a fixup of the keyInfo */
-		case SC_CARD_TYPE_IASECC_GEMALTO:
-		case SC_CARD_TYPE_IASECC_CPX:
-		case SC_CARD_TYPE_IASECC_CPXCL:
-			sc_log(ctx, "Warning: the %d card has an invalid DF, hot patch to be applied",
-				p15card->card->type);
-			break;
-		default:
-			sc_log(ctx, "the %d card has a proper DF, no need for a hot patch",
-				p15card->card->type);
-			LOG_FUNC_RETURN(ctx, SC_SUCCESS);
-			break;
+	switch (p15card->card->type) {
+	/* enumerate the IASECC cards that need a fixup of the keyInfo */
+	case SC_CARD_TYPE_IASECC_GEMALTO:
+	case SC_CARD_TYPE_IASECC_CPX:
+	case SC_CARD_TYPE_IASECC_CPXCL:
+		sc_log(ctx, "Warning: the %d card has an invalid DF, hot patch to be applied", p15card->card->type);
+		break;
+	default:
+		sc_log(ctx, "the %d card has a proper DF, no need for a hot patch", p15card->card->type);
+		LOG_FUNC_RETURN(ctx, SC_SUCCESS);
+		break;
 	}
 
 	if (df->type != SC_PKCS15_PRKDF)

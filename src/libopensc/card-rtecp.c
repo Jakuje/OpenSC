@@ -320,8 +320,9 @@ static int rtecp_select_file(sc_card_t *card,
 	SC_FUNC_RETURN(card->ctx, SC_LOG_DEBUG_VERBOSE, r);
 }
 
-static int rtecp_verify(sc_card_t *card, unsigned int type, int ref_qualifier,
-		const u8 *data, size_t data_len, int *tries_left)
+static int
+rtecp_verify(sc_card_t *card, unsigned int type, int ref_qualifier, const u8 *data, size_t data_len,
+		int *tries_left)
 {
 	sc_apdu_t apdu;
 	int r, send_logout = 0;
@@ -485,9 +486,9 @@ static int rtecp_compute_signature(sc_card_t *card,
 	SC_FUNC_RETURN(card->ctx, SC_LOG_DEBUG_VERBOSE, r);
 }
 
-static int rtecp_change_reference_data(sc_card_t *card, unsigned int type,
-		int ref_qualifier, const u8 *old, size_t oldlen,
-		const u8 *newref, size_t newlen, int *tries_left)
+static int
+rtecp_change_reference_data(sc_card_t *card, unsigned int type, int ref_qualifier, const u8 *old,
+		size_t oldlen, const u8 *newref, size_t newlen, int *tries_left)
 {
 	sc_apdu_t apdu;
 	u8 rsf_length[2], *buf, *buf_end, *p;
@@ -570,8 +571,8 @@ static int rtecp_change_reference_data(sc_card_t *card, unsigned int type,
 	SC_FUNC_RETURN(card->ctx, SC_LOG_DEBUG_VERBOSE, r);
 }
 
-static int rtecp_reset_retry_counter(sc_card_t *card, unsigned int type,
-		int ref_qualifier, const u8 *puk, size_t puklen,
+static int
+rtecp_reset_retry_counter(sc_card_t *card, unsigned int type, int ref_qualifier, const u8 *puk, size_t puklen,
 		const u8 *newref, size_t newlen)
 {
 	sc_apdu_t apdu;

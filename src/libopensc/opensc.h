@@ -36,10 +36,12 @@
 extern "C" {
 #endif
 
+#include "config.h"
+
 #include "common/simclist.h"
-#include "scconf/scconf.h"
 #include "libopensc/errors.h"
 #include "libopensc/types.h"
+#include "scconf/scconf.h"
 #ifdef ENABLE_SM
 #include "libopensc/sm.h"
 #endif
@@ -729,7 +731,8 @@ struct sc_card_operations {
 	 * @param  card   struct sc_card object on which to issue the command
 	 * @param  buf    buffer to be filled with random data
 	 * @param  count  number of random bytes to initialize
-	 * @return number of random bytes successfully initialized (i.e. `count` or less bytes) or an error code
+	 * @return number of random bytes successfully initialized (i.e. `count` or less bytes) or an error
+	 *         code
 	 */
 	int (*get_challenge)(struct sc_card *card, u8 * buf, size_t count);
 
@@ -1357,7 +1360,8 @@ int sc_put_data(struct sc_card *, unsigned int, const u8 *, size_t);
 /**
  * Gets challenge from the card (normally random data).
  * @param  card    struct sc_card object on which to issue the command
- * @param  rndout  buffer for the returned random challenge. Note that the buffer may be only partially initialized on error.
+ * @param  rndout  buffer for the returned random challenge. Note that the buffer may be only partially
+ *                 initialized on error.
  * @param  len     length of the challenge
  * @return SC_SUCCESS on success and an error code otherwise
  */
@@ -1669,7 +1673,7 @@ extern const char *sc_get_version(void);
 
 extern sc_card_driver_t *sc_get_iso7816_driver(void);
 
-/** 
+/**
  * @brief Read a complete EF by short file identifier.
  *
  * @param[in]     card   card
@@ -1736,7 +1740,7 @@ iso7816_build_pin_apdu(struct sc_card *card, struct sc_apdu *apdu,
 /**
  * Free a buffer returned by OpenSC.
  * Use this instead your C libraries free() to free memory allocated by OpenSC.
- * For more details see <https://github.com/OpenSC/OpenSC/issues/2054> 
+ * For more details see <https://github.com/OpenSC/OpenSC/issues/2054>
  *
  * @param[in] p the buffer
  */

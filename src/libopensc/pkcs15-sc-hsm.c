@@ -305,15 +305,16 @@ static void fixup_cvc_printable_string_lengths(sc_cvc_t *cvc)
  * @param asn1_cvc_pubkey: unpopulated array matching c_asn1_cvc_pubkey
  * @param cvc: non NULL cvc struct
  */
-static int sc_pkcs15emu_sc_hsm_format_asn1_cvcert(
+static int
+sc_pkcs15emu_sc_hsm_format_asn1_cvcert(
 		struct sc_asn1_entry *asn1_cvcert, size_t asn1_cvcert_len,
 		struct sc_asn1_entry *asn1_cvc_body, size_t asn1_cvc_body_len,
 		struct sc_asn1_entry *asn1_cvc_pubkey, size_t asn1_cvc_pubkey_len,
 		sc_cvc_t *cvc)
 {
 	if ((asn1_cvc_pubkey_len < C_ASN1_CVC_PUBKEY_SIZE) ||
-		(asn1_cvc_body_len < C_ASN1_CVC_BODY_SIZE) ||
-		(asn1_cvcert_len < C_ASN1_CVCERT_SIZE)) {
+			(asn1_cvc_body_len < C_ASN1_CVC_BODY_SIZE) ||
+			(asn1_cvcert_len < C_ASN1_CVCERT_SIZE)) {
 		return SC_ERROR_BUFFER_TOO_SMALL;
 	}
 
@@ -520,11 +521,9 @@ static int sc_asn1_sc_hsm_pka_data_init(sc_context_t *ctx,
 			&data->public_key_req_arg, 0);
 
 	/* device CVC is a certificate (0x7F21) */
-	r = sc_pkcs15emu_sc_hsm_format_asn1_cvcert(
-			data->asn1_device_cvc.asn1_cvcert, C_ASN1_CVCERT_SIZE,
+	r = sc_pkcs15emu_sc_hsm_format_asn1_cvcert(data->asn1_device_cvc.asn1_cvcert, C_ASN1_CVCERT_SIZE,
 			data->asn1_device_cvc.asn1_cvc_body, C_ASN1_CVC_BODY_SIZE,
-			data->asn1_device_cvc.asn1_cvc_pubkey, C_ASN1_CVC_PUBKEY_SIZE,
-			&pka->device.cvc);
+			data->asn1_device_cvc.asn1_cvc_pubkey, C_ASN1_CVC_PUBKEY_SIZE, &pka->device.cvc);
 	LOG_TEST_RET(ctx, r, "sc_asn1_entry too small");
 
 	/*
@@ -708,10 +707,9 @@ int sc_pkcs15emu_sc_hsm_decode_pka(sc_pkcs15_card_t *p15card,
 			"Could not decode first sequence tag for public key file");
 	currlen = *buflen - (curr - *buf);
 
-	if ((cla != (SC_ASN1_TAG_UNIVERSAL|SC_ASN1_TAG_CONSTRUCTED)) ||
+	if ((cla != (SC_ASN1_TAG_UNIVERSAL | SC_ASN1_TAG_CONSTRUCTED)) ||
 			(tag != SC_ASN1_TAG_SEQUENCE)) {
-		sc_log(card->ctx,
-			   "Expected sequence tag, but got tag %u class 0x%x", tag, cla);
+		sc_log(card->ctx, "Expected sequence tag, but got tag %u class 0x%x", tag, cla);
 		r = SC_ERROR_INVALID_ASN1_OBJECT;
 		goto err;
 	}
@@ -725,10 +723,8 @@ int sc_pkcs15emu_sc_hsm_decode_pka(sc_pkcs15_card_t *p15card,
 	if (tag == SC_ASN1_TAG_OBJECT) {
 		/* OID means it's the new format */
 		r = decode_pka_new_format(p15card, &curr, &currlen, pka);
-		LOG_TEST_GOTO_ERR(card->ctx, r,
-			"Could not decode public key file new format");
-	} else if ((cla == (SC_ASN1_TAG_APPLICATION|SC_ASN1_TAG_CONSTRUCTED)) &&
-				(tag == 7)) {
+		LOG_TEST_GOTO_ERR(card->ctx, r, "Could not decode public key file new format");
+	} else if ((cla == (SC_ASN1_TAG_APPLICATION | SC_ASN1_TAG_CONSTRUCTED)) && (tag == 7)) {
 		/*
 		 * if it's authenticatedrequest (Application 7 / 0x67), then attempt
 		 * to parse the old format
@@ -1003,7 +999,9 @@ void sc_pkcs15emu_sc_hsm_free_cvc_pka(sc_cvc_pka_t *pka)
 	memset(pka, 0, sizeof(*pka));
 }
 
-static int sc_pkcs15emu_sc_hsm_add_pubkey(sc_pkcs15_card_t *p15card, u8 *efbin, size_t len, sc_pkcs15_prkey_info_t *key_info, char *label)
+static int
+sc_pkcs15emu_sc_hsm_add_pubkey(sc_pkcs15_card_t *p15card, u8 *efbin, size_t len,
+		sc_pkcs15_prkey_info_t *key_info, char *label)
 {
 	struct sc_context *ctx = p15card->card->ctx;
 	sc_card_t *card = p15card->card;
@@ -1491,7 +1489,8 @@ static int sc_pkcs15emu_sc_hsm_init (sc_pkcs15_card_t * p15card)
 		r = sc_pin_cmd(card, &pindata, NULL);
 	}
 
-	if ((r != SC_ERROR_DATA_OBJECT_NOT_FOUND) && (r != SC_ERROR_INCORRECT_PARAMETERS) && (r != SC_ERROR_REF_DATA_NOT_USABLE))
+	if ((r != SC_ERROR_DATA_OBJECT_NOT_FOUND) && (r != SC_ERROR_INCORRECT_PARAMETERS) &&
+			(r != SC_ERROR_REF_DATA_NOT_USABLE))
 		card->caps |= SC_CARD_CAP_PROTECTED_AUTHENTICATION_PATH;
 
 
@@ -1525,9 +1524,9 @@ static int sc_pkcs15emu_sc_hsm_init (sc_pkcs15_card_t * p15card)
 int sc_pkcs15emu_sc_hsm_init_ex(sc_pkcs15_card_t *p15card,
 				struct sc_aid *aid)
 {
-	if (p15card->card->type != SC_CARD_TYPE_SC_HSM
-			&& p15card->card->type != SC_CARD_TYPE_SC_HSM_SOC
-			&& p15card->card->type != SC_CARD_TYPE_SC_HSM_GOID) {
+	if (p15card->card->type != SC_CARD_TYPE_SC_HSM &&
+			p15card->card->type != SC_CARD_TYPE_SC_HSM_SOC &&
+			p15card->card->type != SC_CARD_TYPE_SC_HSM_GOID) {
 		return SC_ERROR_WRONG_CARD;
 	}
 	return sc_pkcs15emu_sc_hsm_init(p15card);

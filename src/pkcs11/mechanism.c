@@ -105,15 +105,15 @@ sc_pkcs11_copy_mechanism(sc_pkcs11_mechanism_type_t *mt,
 	*new_mt = calloc(1, sizeof(sc_pkcs11_mechanism_type_t));
 	if (!(*new_mt))
 		return CKR_HOST_MEMORY;
-	
+
 	memcpy(*new_mt, mt, sizeof(sc_pkcs11_mechanism_type_t));
 	/* mech_data needs specific function for making copy*/
-	if (mt->copy_mech_data
-		&& (rv = mt->copy_mech_data(mt->mech_data, (void **) &(*new_mt)->mech_data)) != CKR_OK) {
+	if (mt->copy_mech_data &&
+			(rv = mt->copy_mech_data(mt->mech_data, (void **)&(*new_mt)->mech_data)) != CKR_OK) {
 		free(*new_mt);
 		return rv;
 	}
-	
+
 	return CKR_OK;
 }
 
@@ -124,8 +124,8 @@ sc_pkcs11_copy_mechanism(sc_pkcs11_mechanism_type_t *mt,
  * in p11card.
  */
 CK_RV
-sc_pkcs11_register_mechanism(struct sc_pkcs11_card *p11card,
-				sc_pkcs11_mechanism_type_t *mt, sc_pkcs11_mechanism_type_t **result_mt)
+sc_pkcs11_register_mechanism(struct sc_pkcs11_card *p11card, sc_pkcs11_mechanism_type_t *mt,
+		sc_pkcs11_mechanism_type_t **result_mt)
 {
 	sc_pkcs11_mechanism_type_t *existing_mt;
 	sc_pkcs11_mechanism_type_t *copy_mt = NULL;
@@ -158,7 +158,8 @@ sc_pkcs11_register_mechanism(struct sc_pkcs11_card *p11card,
 				return CKR_OK;
 			}
 		}
-		sc_log(p11card->card->ctx, "Too many key types in mechanism 0x%lx, more than %d", mt->mech, MAX_KEY_TYPES);
+		sc_log(p11card->card->ctx, "Too many key types in mechanism 0x%lx, more than %d", mt->mech,
+				MAX_KEY_TYPES);
 		return CKR_BUFFER_TOO_SMALL;
 	}
 
@@ -367,7 +368,7 @@ sc_pkcs11_md_final(struct sc_pkcs11_session *session,
  */
 CK_RV
 sc_pkcs11_sign_init(struct sc_pkcs11_session *session, CK_MECHANISM_PTR pMechanism,
-		    struct sc_pkcs11_object *key, CK_KEY_TYPE key_type)
+		struct sc_pkcs11_object *key, CK_KEY_TYPE key_type)
 {
 	struct sc_pkcs11_card *p11card;
 	sc_pkcs11_operation_t *operation;
@@ -863,7 +864,6 @@ sc_pkcs11_verify_final(sc_pkcs11_operation_t *operation,
 
 	if (key_type != CKK_GOSTR3410)
 		attr.type = CKA_SPKI;
-		
 
 	rv = key->ops->get_attribute(operation->session, key, &attr);
 	if (rv != CKR_OK)
@@ -1028,9 +1028,9 @@ sc_pkcs11_encr_final(struct sc_pkcs11_session *session,
  */
 CK_RV
 sc_pkcs11_decr_init(struct sc_pkcs11_session *session,
-			CK_MECHANISM_PTR pMechanism,
-			struct sc_pkcs11_object *key,
-			CK_KEY_TYPE key_type)
+		CK_MECHANISM_PTR pMechanism,
+		struct sc_pkcs11_object *key,
+		CK_KEY_TYPE key_type)
 {
 	struct sc_pkcs11_card *p11card;
 	sc_pkcs11_operation_t *operation;
@@ -1667,11 +1667,11 @@ sc_pkcs11_unwrap_operation(sc_pkcs11_operation_t *operation,
  */
 sc_pkcs11_mechanism_type_t *
 sc_pkcs11_new_fw_mechanism(CK_MECHANISM_TYPE mech,
-				CK_MECHANISM_INFO_PTR pInfo,
-				CK_KEY_TYPE key_type,
-				const void *priv_data,
-				void (*free_priv_data)(const void *priv_data),
-				CK_RV (*copy_priv_data)(const void *mech_data, void **new_data))
+		CK_MECHANISM_INFO_PTR pInfo,
+		CK_KEY_TYPE key_type,
+		const void *priv_data,
+		void (*free_priv_data)(const void *priv_data),
+		CK_RV (*copy_priv_data)(const void *mech_data, void **new_data))
 {
 	sc_pkcs11_mechanism_type_t *mt;
 
@@ -1760,7 +1760,7 @@ CK_RV copy_hash_signature_info(const void *mech_data, void **new_data)
 	*new_data = calloc(1, sizeof(struct hash_signature_info));
 	if (!(*new_data))
 		return CKR_HOST_MEMORY;
-	
+
 	memcpy(*new_data, mech_data, sizeof(struct hash_signature_info));
 	return CKR_OK;
 }
@@ -1799,7 +1799,8 @@ sc_pkcs11_register_sign_and_hash_mechanism(struct sc_pkcs11_card *p11card,
 	info->sign_mech = sign_type->mech;
 	info->hash_mech = hash_mech;
 
-	new_type = sc_pkcs11_new_fw_mechanism(mech, &mech_info, sign_type->key_types[0], info, free_info, copy_hash_signature_info);
+	new_type = sc_pkcs11_new_fw_mechanism(mech, &mech_info, sign_type->key_types[0], info, free_info,
+			copy_hash_signature_info);
 	if (!new_type) {
 		free_info(info);
 		return CKR_HOST_MEMORY;

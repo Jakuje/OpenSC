@@ -608,8 +608,8 @@ openssl_dig(const EVP_MD * digest, const unsigned char *input, size_t length,
 	}
 
 	EVP_MD_CTX_init(ctx);
-	if (!EVP_DigestInit_ex(ctx, digest, NULL)
-			|| !EVP_DigestUpdate(ctx, input, length)) {
+	if (!EVP_DigestInit_ex(ctx, digest, NULL) ||
+			!EVP_DigestUpdate(ctx, input, length)) {
 		r = SC_ERROR_INTERNAL;
 		goto err;
 	}
@@ -2413,9 +2413,9 @@ sec_attr_to_entry(struct sc_card *card, sc_file_t *file, int indx)
 	for (i = 0; i < (int)(sizeof(sec_attr_to_acl_entry) / sizeof(sec_attr_to_acl_entries_t)); i++) {
 		const sec_attr_to_acl_entries_t *e = &sec_attr_to_acl_entry[i];
 
-		if (indx == e->indx && file->type == e->file_type
-				&& file->ef_structure == e->file_ef_structure) {
-				/* may add multiple entries */
+		if (indx == e->indx && file->type == e->file_type &&
+				file->ef_structure == e->file_ef_structure) {
+			/* may add multiple entries */
 			sc_file_add_acl_entry(file, e->op, method, keyref);
 			found++;
 		}

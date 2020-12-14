@@ -40,8 +40,8 @@
 #error "Need OpenSSL"
 #endif
 
-#include <openssl/evp.h>
 #include <openssl/des.h>
+#include <openssl/evp.h>
 #include <openssl/sha.h>
 
 #include "libopensc/opensc.h"
@@ -93,11 +93,10 @@
  */
 static void
 DES_3cbc_encrypt(sm_des_cblock *input, sm_des_cblock *output, long length,
-		 DES_key_schedule *ks1, DES_key_schedule *ks2, sm_des_cblock *iv,
-		 int enc)
-	{
-	int off=((int)length-1)/8;
-	long l8=((length+7)/8)*8;
+		DES_key_schedule *ks1, DES_key_schedule *ks2, sm_des_cblock *iv, int enc)
+{
+	int off = ((int)length - 1) / 8;
+	long l8 = ((length + 7) / 8) * 8;
 	sm_des_cblock icv_out;
 
 	memset(&icv_out, 0, sizeof(icv_out));
@@ -125,12 +124,9 @@ DES_3cbc_encrypt(sm_des_cblock *input, sm_des_cblock *output, long length,
 }
 #endif
 
-
 unsigned int
-DES_cbc_cksum_3des_emv96(struct sc_context *ctx,
-			 const unsigned char *in, sm_des_cblock *output,
-			   long length, unsigned char *key,
-			   sm_const_des_cblock *ivec)
+DES_cbc_cksum_3des_emv96(struct sc_context *ctx, const unsigned char *in, sm_des_cblock *output, long length,
+		unsigned char *key, sm_const_des_cblock *ivec)
 {
 	register long l=length;
 	unsigned char *out = &(*output)[0];
@@ -259,12 +255,9 @@ DES_cbc_cksum_3des_emv96(struct sc_context *ctx,
 #endif
 }
 
-
 unsigned int
-DES_cbc_cksum_3des(struct sc_context *ctx,
-		   const unsigned char *in, sm_des_cblock *output,
-		       long length, unsigned char *key,
-		       sm_const_des_cblock *ivec)
+DES_cbc_cksum_3des(struct sc_context *ctx, const unsigned char *in, sm_des_cblock *output, long length,
+		unsigned char *key, sm_const_des_cblock *ivec)
 {
 	register long l=length;
 	unsigned char *out = &(*output)[0];
@@ -390,8 +383,8 @@ sm_encrypt_des_ecb3(struct sc_context *ctx,
 	DES_set_key_unchecked(&kk,&ks);
 	DES_set_key_unchecked(&k2,&ks2);
 
-	for (ii=0; ii<data_len; ii+=8)
-		DES_ecb2_encrypt( (sm_des_cblock *)(data + ii),
+	for (ii = 0; ii < data_len; ii += 8)
+		DES_ecb2_encrypt((sm_des_cblock *)(data + ii),
 				(sm_des_cblock *)(*out + ii), &ks, &ks2, DES_ENCRYPT);
 
 	return SC_SUCCESS;
@@ -427,10 +420,8 @@ err:
 #endif
 }
 
-
 int
-sm_decrypt_des_cbc3(struct sc_context *ctx, unsigned char *key,
-		unsigned char *data, size_t data_len,
+sm_decrypt_des_cbc3(struct sc_context *ctx, unsigned char *key, unsigned char *data, size_t data_len,
 		unsigned char **out, size_t *out_len)
 {
 #if OPENSSL_VERSION_NUMBER < 0x30000000L
@@ -465,7 +456,7 @@ sm_decrypt_des_cbc3(struct sc_context *ctx, unsigned char *key,
 	DES_set_key_unchecked(&kk,&ks);
 	DES_set_key_unchecked(&k2,&ks2);
 
-	for (st=0; st<data_len; st+=8)
+	for (st = 0; st < data_len; st += 8)
 		DES_3cbc_encrypt((sm_des_cblock *)(data + st),
 				(sm_des_cblock *)(decrypted + st), 8, &ks, &ks2, &icv, DES_DECRYPT);
 #else
@@ -504,8 +495,7 @@ sm_decrypt_des_cbc3(struct sc_context *ctx, unsigned char *key,
 
 /* This function expects the data to be a multiple of DES block size */
 int
-sm_encrypt_des_cbc3(struct sc_context *ctx, unsigned char *key,
-		const unsigned char *in, size_t in_len,
+sm_encrypt_des_cbc3(struct sc_context *ctx, unsigned char *key, const unsigned char *in, size_t in_len,
 		unsigned char **out, size_t *out_len, int not_force_pad)
 {
 #if OPENSSL_VERSION_NUMBER < 0x30000000L
@@ -563,8 +553,9 @@ sm_encrypt_des_cbc3(struct sc_context *ctx, unsigned char *key,
 	DES_set_key_unchecked(&kk,&ks);
 	DES_set_key_unchecked(&k2,&ks2);
 
-	for (st=0; st<data_len; st+=8)
-		DES_3cbc_encrypt((sm_des_cblock *)(data + st), (sm_des_cblock *)(*out + st), 8, &ks, &ks2, &icv, DES_ENCRYPT);
+	for (st = 0; st < data_len; st += 8)
+		DES_3cbc_encrypt((sm_des_cblock *)(data + st), (sm_des_cblock *)(*out + st), 8, &ks, &ks2, &icv,
+				DES_ENCRYPT);
 #else
 	cctx = EVP_CIPHER_CTX_new();
 	alg = sc_evp_cipher(ctx, "DES-EDE-CBC");

@@ -685,8 +685,8 @@ static int westcos_get_crypte_challenge(sc_card_t * card, const u8 * key,
 		return SC_ERROR_INTERNAL;
 	alg = sc_evp_cipher(card->ctx, "DES-EDE-ECB");
 	if (EVP_EncryptInit_ex(cctx, alg, NULL, key, NULL) != 1 ||
-		EVP_CIPHER_CTX_set_padding(cctx,0) != 1 ||
-		EVP_EncryptUpdate(cctx, result, &tmplen, buf, *len) != 1) {
+			EVP_CIPHER_CTX_set_padding(cctx, 0) != 1 ||
+			EVP_EncryptUpdate(cctx, result, &tmplen, buf, *len) != 1) {
 		EVP_CIPHER_CTX_free(cctx);
 		sc_evp_cipher_free(alg);
 		return SC_ERROR_INTERNAL;
@@ -1226,8 +1226,8 @@ static int westcos_sign_decipher(int mode, sc_card_t *card,
 
 	if (mode) {		/* decipher */
 		if (EVP_PKEY_decrypt_init(ctx) != 1 ||
-			EVP_PKEY_CTX_set_rsa_padding(ctx, pad) != 1 ||
-			EVP_PKEY_decrypt(ctx, out, &tmplen, data, data_len) != 1) {
+				EVP_PKEY_CTX_set_rsa_padding(ctx, pad) != 1 ||
+				EVP_PKEY_decrypt(ctx, out, &tmplen, data, data_len) != 1) {
 
 #ifdef DEBUG_SSL
 			print_openssl_error();
@@ -1241,8 +1241,8 @@ static int westcos_sign_decipher(int mode, sc_card_t *card,
 
 	else {			/* sign */
 		if (EVP_PKEY_encrypt_init(ctx) != 1 ||
-			EVP_PKEY_CTX_set_rsa_padding(ctx, pad) != 1 ||
-			EVP_PKEY_encrypt(ctx, out, &tmplen, data, data_len) != 1) {
+				EVP_PKEY_CTX_set_rsa_padding(ctx, pad) != 1 ||
+				EVP_PKEY_encrypt(ctx, out, &tmplen, data, data_len) != 1) {
 
 #ifdef DEBUG_SSL
 			print_openssl_error();

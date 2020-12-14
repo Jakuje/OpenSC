@@ -21,6 +21,7 @@
 #ifndef _OPENSC_CARDS_H
 #define _OPENSC_CARDS_H
 
+#include "libopensc/opensc.h"
 #include "libopensc/types.h"
 
 #ifdef __cplusplus

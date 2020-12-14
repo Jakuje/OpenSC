@@ -1549,14 +1549,11 @@ sc_pkcs15init_generate_key(struct sc_pkcs15_card *p15card, struct sc_profile *pr
 	memset(&pubkey_args, 0, sizeof(pubkey_args));
 
 	/* check supported key size */
-	r = check_keygen_params_consistency(p15card->card,
-		algorithm, &keygen_args->prkey_args,
-		&keybits);
+	r = check_keygen_params_consistency(p15card->card, algorithm, &keygen_args->prkey_args, &keybits);
 	LOG_TEST_RET(ctx, r, "Invalid key size");
 
-	if (check_key_compatibility(p15card, algorithm,
-			&keygen_args->prkey_args.key, keygen_args->prkey_args.x509_usage,
-			keybits, SC_ALGORITHM_ONBOARD_KEY_GEN) != SC_SUCCESS) {
+	if (check_key_compatibility(p15card, algorithm, &keygen_args->prkey_args.key,
+				keygen_args->prkey_args.x509_usage, keybits, SC_ALGORITHM_ONBOARD_KEY_GEN) != SC_SUCCESS) {
 		r = SC_ERROR_NOT_SUPPORTED;
 		LOG_TEST_GOTO_ERR(ctx, r, "Cannot generate key with the given parameters");
 	}
@@ -1566,7 +1563,7 @@ sc_pkcs15init_generate_key(struct sc_pkcs15_card *p15card, struct sc_profile *pr
 		LOG_TEST_GOTO_ERR(ctx, r, "Key generation not supported");
 	}
 
-	if (keygen_args->prkey_args.id.len)   {
+	if (keygen_args->prkey_args.id.len) {
 		caller_supplied_id = 1;
 
 		/* Make sure that private key's ID is the unique inside the PKCS#15 application */

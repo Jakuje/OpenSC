@@ -277,10 +277,9 @@ static int format_senv(struct sc_pkcs15_card *p15card,
 	return SC_SUCCESS;
 }
 
-int sc_pkcs15_decipher(struct sc_pkcs15_card *p15card,
-		const struct sc_pkcs15_object *obj,
-		unsigned long flags,
-		const u8 * in, size_t inlen, u8 *out, size_t outlen, void *pMechanism)
+int
+sc_pkcs15_decipher(struct sc_pkcs15_card *p15card, const struct sc_pkcs15_object *obj, unsigned long flags,
+		const u8 *in, size_t inlen, u8 *out, size_t outlen, void *pMechanism)
 {
 	sc_context_t *ctx = p15card->card->ctx;
 	int r;
@@ -590,10 +589,9 @@ int sc_pkcs15_wrap(struct sc_pkcs15_card *p15card,
 #define USAGE_ANY_DECIPHER      (SC_PKCS15_PRKEY_USAGE_DECRYPT|\
                                  SC_PKCS15_PRKEY_USAGE_UNWRAP)
 
-int sc_pkcs15_compute_signature(struct sc_pkcs15_card *p15card,
-				const struct sc_pkcs15_object *obj,
-				unsigned long flags, const u8 *in, size_t inlen,
-				u8 *out, size_t outlen, void *pMechanism)
+int
+sc_pkcs15_compute_signature(struct sc_pkcs15_card *p15card, const struct sc_pkcs15_object *obj,
+		unsigned long flags, const u8 *in, size_t inlen, u8 *out, size_t outlen, void *pMechanism)
 {
 	sc_context_t *ctx = p15card->card->ctx;
 	int r;
@@ -713,8 +711,8 @@ int sc_pkcs15_compute_signature(struct sc_pkcs15_card *p15card,
 	/* ECDSA software hash has already been done, or is not needed, or card will do hash */
 	/* if card can not do the hash, will use SC_ALGORITHM_ECDSA_RAW */
 	if (obj->type == SC_PKCS15_TYPE_PRKEY_EC) {
-		if ((alg_info->flags & SC_ALGORITHM_ECDSA_RAW)
-				&& !(flags & SC_ALGORITHM_ECDSA_HASHES & alg_info->flags)) {
+		if ((alg_info->flags & SC_ALGORITHM_ECDSA_RAW) &&
+				!(flags & SC_ALGORITHM_ECDSA_HASHES & alg_info->flags)) {
 			sc_log(ctx, "ECDSA using SC_ALGORITHM_ECDSA_RAW flags before 0x%8.8lx", flags);
 				flags |= SC_ALGORITHM_ECDSA_RAW;
 				flags &= ~SC_ALGORITHM_ECDSA_HASHES;
@@ -728,16 +726,15 @@ int sc_pkcs15_compute_signature(struct sc_pkcs15_card *p15card,
 	/* senv now has flags card or driver will do */
 	senv.algorithm_flags = sec_flags;
 
-	sc_log(ctx, "DEE flags:0x%8.8lx alg_info->flags:0x%8.8x pad:0x%8.8lx sec:0x%8.8lx",
-		flags, alg_info->flags, pad_flags, sec_flags);
+	sc_log(ctx, "DEE flags:0x%8.8lx alg_info->flags:0x%8.8x pad:0x%8.8lx sec:0x%8.8lx", flags,
+			alg_info->flags, pad_flags, sec_flags);
 
 	/* add the padding bytes (if necessary) */
 	if (pad_flags != 0) {
 		size_t tmplen = buflen;
 
 		/* XXX Assuming RSA key here */
-		r = sc_pkcs1_encode(ctx, pad_flags, tmp, inlen, tmp, &tmplen,
-		    prkey->modulus_length, pMechanism);
+		r = sc_pkcs1_encode(ctx, pad_flags, tmp, inlen, tmp, &tmplen, prkey->modulus_length, pMechanism);
 		LOG_TEST_GOTO_ERR(ctx, r, "Unable to add padding");
 		inlen = tmplen;
 	}

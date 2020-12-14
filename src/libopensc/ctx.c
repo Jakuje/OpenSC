@@ -101,7 +101,6 @@ struct _sc_driver_entry {
 	void *(*func)(void);
 };
 
-
 // clang-format off
 static const struct _sc_driver_entry internal_card_drivers[] = {
 	/* The card handled by skeid shares the ATR with other cards running CardOS 5.4.

@@ -21,11 +21,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "internal.h"
-#include "opensc.h"
 #include "cards.h"
 #include "common/compat_strlcpy.h"
+#include "internal.h"
 #include "log.h"
+#include "opensc.h"
 #include "pkcs15.h"
 
 static const char name_Card[] = "NQ-Applet";
@@ -71,7 +71,7 @@ static int add_nqapplet_pin(sc_pkcs15_card_t *p15card, const char *id, u8 refere
 	pin_info.auth_type = SC_PKCS15_PIN_AUTH_TYPE_PIN;
 	pin_info.attrs.pin.reference = reference;
 	pin_info.attrs.pin.flags = SC_PKCS15_PIN_FLAG_INITIALIZED | SC_PKCS15_PIN_FLAG_CASE_SENSITIVE |
-	                           SC_PKCS15_PIN_TYPE_FLAGS_PIN_GLOBAL | SC_PKCS15_PIN_AUTH_TYPE_PIN;
+					SC_PKCS15_PIN_TYPE_FLAGS_PIN_GLOBAL | SC_PKCS15_PIN_AUTH_TYPE_PIN;
 	pin_info.attrs.pin.type = SC_PKCS15_PIN_TYPE_UTF8;
 	pin_info.attrs.pin.min_length = 6;
 	pin_info.attrs.pin.stored_length = 6;
@@ -113,8 +113,9 @@ static int add_nqapplet_certificate(sc_pkcs15_card_t *p15card, const char *id, c
 	LOG_FUNC_RETURN(card->ctx, SC_SUCCESS);
 }
 
-static int add_nqapplet_private_key(sc_pkcs15_card_t *p15card, const char *id, int reference,
-                                    const char *name, const char *pin_id, unsigned int usage)
+static int
+add_nqapplet_private_key(sc_pkcs15_card_t *p15card, const char *id, int reference, const char *name,
+		const char *pin_id, unsigned int usage)
 {
 	int rv;
 	struct sc_pkcs15_prkey_info prkey_info;
@@ -159,7 +160,7 @@ static int add_nqapplet_objects(sc_pkcs15_card_t *p15card)
 
 	// 2.2) PrK.CH.Auth
 	rv = add_nqapplet_private_key(p15card, "1", 0x01, "PrK.CH.Auth", "1",
-	                              SC_PKCS15_PRKEY_USAGE_SIGN | SC_PKCS15_PRKEY_USAGE_DECRYPT);
+			SC_PKCS15_PRKEY_USAGE_SIGN | SC_PKCS15_PRKEY_USAGE_DECRYPT);
 	LOG_TEST_RET(card->ctx, rv, "Failed to add Auth. private key");
 
 	// 3.1) C.CH.Encr

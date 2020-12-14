@@ -43,12 +43,12 @@
 #include <openssl/err.h>
 
 #include "fread_to_eof.h"
-#include "libopensc/sc-ossl-compat.h"
-#include "libopensc/opensc.h"
-#include "libopensc/cardctl.h"
 #include "libopensc/asn1.h"
-#include "libopensc/log.h"
 #include "libopensc/card-sc-hsm.h"
+#include "libopensc/cardctl.h"
+#include "libopensc/log.h"
+#include "libopensc/opensc.h"
+#include "libopensc/sc-ossl-compat.h"
 #include "util.h"
 
 static const char *app_name = "sc-hsm-tool";
@@ -573,9 +573,10 @@ static void print_info(sc_card_t *card, sc_file_t *file)
 	print_dkek_info(&dkekinfo);
 }
 
-
-
-static int initialize(sc_card_t *card, const char *so_pin, const char *user_pin, int retry_counter, const char *bio1, const char *bio2, int dkek_shares, signed char num_of_pub_keys, u8 required_pub_keys, const char *label)
+static int
+initialize(sc_card_t *card, const char *so_pin, const char *user_pin, int retry_counter, const char *bio1,
+		const char *bio2, int dkek_shares, signed char num_of_pub_keys, u8 required_pub_keys,
+		const char *label)
 {
 	sc_cardctl_sc_hsm_init_param_t param;
 	size_t len;
@@ -907,7 +908,7 @@ static int import_dkek_share(sc_card_t *card, const char *inf, int iter, const c
 
 static int print_dkek_share(sc_card_t *card, const char *inf, int iter, const char *password, int num_of_password_shares)
 {
-	// hex output can be used in the SCSH shell with the 
+	// hex output can be used in the SCSH shell with the
 	// decrypt_keyblob.js file
 	sc_cardctl_sc_hsm_dkek_t dkekinfo;
 	EVP_CIPHER_CTX *bn_ctx = NULL;
@@ -1841,7 +1842,8 @@ static int register_public_key(sc_context_t *ctx, sc_card_t *card, const char *i
 		goto err;
 	}
 	if (r < 0) {
-		fprintf(stderr, "sc_card_ctl(*, SC_CARDCTL_SC_HSM_REGISTER_PUBLIC_KEY, *) failed with %s\n", sc_strerror(r));
+		fprintf(stderr, "sc_card_ctl(*, SC_CARDCTL_SC_HSM_REGISTER_PUBLIC_KEY, *) failed with %s\n",
+				sc_strerror(r));
 		r = -1;
 		goto err;
 	}
@@ -1870,7 +1872,8 @@ static int public_key_auth_status(sc_context_t *ctx, sc_card_t *card)
 		return -1;
 	}
 	if (r < 0) {
-		fprintf(stderr, "sc_card_ctl(*, SC_CARDCTL_SC_HSM_PUBLIC_KEY_AUTH_STATUS, *) failed with %s\n", sc_strerror(r));
+		fprintf(stderr, "sc_card_ctl(*, SC_CARDCTL_SC_HSM_PUBLIC_KEY_AUTH_STATUS, *) failed with %s\n",
+				sc_strerror(r));
 		return -1;
 	}
 
@@ -2107,16 +2110,22 @@ int main(int argc, char *argv[])
 		goto fail;
 	}
 
-	if (do_initialize && initialize(card, opt_so_pin, opt_pin, opt_retry_counter, opt_bio1, opt_bio2, opt_dkek_shares, opt_num_of_pub_keys, opt_required_pub_keys, opt_label))
+	if (do_initialize && initialize(card, opt_so_pin, opt_pin, opt_retry_counter, opt_bio1, opt_bio2,
+								opt_dkek_shares, opt_num_of_pub_keys,
+								opt_required_pub_keys, opt_label))
 		goto fail;
 
-	if (do_create_dkek_share && create_dkek_share(card, opt_filename, opt_iter, opt_password, opt_password_shares_threshold, opt_password_shares_total))
+	if (do_create_dkek_share && create_dkek_share(card, opt_filename, opt_iter, opt_password,
+								opt_password_shares_threshold,
+								opt_password_shares_total))
 		goto fail;
 
-	if (do_import_dkek_share && import_dkek_share(card, opt_filename, opt_iter, opt_password, opt_password_shares_total))
+	if (do_import_dkek_share &&
+			import_dkek_share(card, opt_filename, opt_iter, opt_password, opt_password_shares_total))
 		goto fail;
 
-	if (do_print_dkek_share && print_dkek_share(card, opt_filename, opt_iter, opt_password, opt_password_shares_total))
+	if (do_print_dkek_share &&
+			print_dkek_share(card, opt_filename, opt_iter, opt_password, opt_password_shares_total))
 		goto fail;
 
 	if (do_wrap_key && wrap_key(ctx, card, opt_key_reference, opt_filename, opt_pin))

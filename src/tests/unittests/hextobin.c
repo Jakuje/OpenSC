@@ -17,14 +17,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdio.h>
-#include <stdint.h>
-#include <string.h>
 #include "libopensc/opensc.h"
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
 
 #define LEN 30
 
-#define C_END -1
+#define C_EN   -1
 #define C_ERROR -3
 
 struct tst {
@@ -32,9 +32,12 @@ struct tst {
 	const char *input;
 	const char *output;
 };
-int main()
+
+int
+main(void)
 {
 	struct tst *t;
+// clang-format off
 	struct tst test[] = {
 		{1, "0", "\x00"},
 		{1, " 0", "\x00"},
@@ -80,16 +83,17 @@ int main()
 		{C_ERROR, "1:1", ""},
 		{C_ERROR, " :1 1:", ""},
 		{C_ERROR, "0:0 :", ""},
-		{C_ERROR, "1:234:56", ""},	/* odd number of characters between delimiters  (234) */
+		{C_ERROR, "1:234:56", ""}, /* odd number of characters between delimiters  (234) */
 		{C_ERROR, " :b:211 :", ""},
-		{C_ERROR, "02030", ""},	/* one char missing (to have full byte) */
+		{C_ERROR, "02030", ""}, /* one char missing (to have full byte) */
 		{C_ERROR, "111", ""},
 		{C_ERROR, "b:211 :2", ""},
 		{C_ERROR, "G", ""},
 		{C_ERROR, " z", ""},
 		{C_ERROR, ":a1:1", ""},
-		{C_END, "", ""}
+		{C_END, "", ""},
 	};
+// clang-format on
 	uint8_t res[LEN];
 	size_t len;
 	int rv, r;
@@ -100,19 +104,16 @@ int main()
 		rv = sc_hex_to_bin(t->input, res, &len);
 		if (rv) {
 			if (r != C_ERROR) {
-				fprintf(stderr, "fail at string %s (return code %d, %d\n", t->input,
-					rv, r);
+				fprintf(stderr, "fail at string %s (return code %d, %d\n", t->input, rv, r);
 				return 1;
 			}
 		} else {
 			if (r == C_ERROR) {
-				fprintf(stderr, "fail at string %s (return code %d, %d)\n",
-					t->input, rv, r);
+				fprintf(stderr, "fail at string %s (return code %d, %d)\n", t->input, rv, r);
 				return 2;
 			}
 			if ((int)len != r) {
-				fprintf(stderr, "fail at string %s (length %zu %d)\n", t->input,
-					len, r);
+				fprintf(stderr, "fail at string %s (length %zu %d)\n", t->input, len, r);
 				return 3;
 			}
 			if (memcmp(t->output, res, len)) {

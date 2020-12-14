@@ -19,13 +19,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 
 #include "internal.h"
-#include "pkcs15-syn.h"
 #include "pkcs15-emulator-filter.h"
+#include "pkcs15-syn.h"
 
 static int add_emul(struct _sc_pkcs15_emulators* filtered_emulators,
 					struct sc_pkcs15_emulator_handler* emul_handler)
@@ -35,7 +35,7 @@ static int add_emul(struct _sc_pkcs15_emulators* filtered_emulators,
 
 	if (!filtered_emulators || !emul_handler || !emul_handler->name || !emul_handler->handler)
 		return SC_ERROR_INVALID_ARGUMENTS;
-	
+
 	lst = filtered_emulators->list_of_handlers;
 	cp = &filtered_emulators->ccount;
 	max = SC_MAX_PKCS15_EMULATORS;
@@ -74,12 +74,13 @@ static int add_emul_list(struct _sc_pkcs15_emulators* filtered_emulators,
 	return SC_SUCCESS;
 }
 
-int set_emulators(sc_context_t *ctx, struct _sc_pkcs15_emulators* filtered_emulators, const scconf_list *list,
-				  struct sc_pkcs15_emulator_handler* internal, struct sc_pkcs15_emulator_handler* old)
+int
+set_emulators(sc_context_t *ctx, struct _sc_pkcs15_emulators *filtered_emulators, const scconf_list *list,
+		struct sc_pkcs15_emulator_handler *internal, struct sc_pkcs15_emulator_handler *old)
 {
 	const scconf_list *item;
 	int *cp, i, r, count;
-	
+
 	LOG_FUNC_CALLED(ctx);
 
 	if (!filtered_emulators || !list || !internal || !old)

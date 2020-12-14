@@ -292,10 +292,10 @@ out:
 	name = lookup_enum (RV_T, rv );
 	if (name)
 		sc_log(context, "C_GetAttributeValue(hSession=0x%lx, hObject=0x%lx) = %s",
-			hSession, hObject, name);
+				hSession, hObject, name);
 	else
 		sc_log(context, "C_GetAttributeValue(hSession=0x%lx, hObject=0x%lx) = 0x%lx",
-                        hSession, hObject, rv);
+				hSession, hObject, rv);
 
 	sc_pkcs11_unlock();
 	return rv;

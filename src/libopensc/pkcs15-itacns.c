@@ -187,10 +187,10 @@ static int loadFile(const sc_pkcs15_card_t *p15card, const sc_path_t *path,
  * The following functions add objects to the card emulator.
  */
 
-static int itacns_add_cert(sc_pkcs15_card_t *p15card,
-	int type, int authority, const sc_path_t *path,
-	const sc_pkcs15_id_t *id, const char *label, int obj_flags,
-	int *ext_info_ok, int *key_usage, int *x_key_usage, int *modulus_len)
+static int
+itacns_add_cert(sc_pkcs15_card_t *p15card, int type, int authority, const sc_path_t *path,
+		const sc_pkcs15_id_t *id, const char *label, int obj_flags, int *ext_info_ok, int *key_usage,
+		int *x_key_usage, int *modulus_len)
 {
 	int r;
 	/* const char *label = "Certificate"; */
@@ -260,9 +260,9 @@ static int itacns_add_cert(sc_pkcs15_card_t *p15card,
 	return r;
 }
 
-static int itacns_add_pubkey(sc_pkcs15_card_t *p15card,
-	 const sc_path_t *path, const sc_pkcs15_id_t *id, const char *label,
-	int usage, int ref, int obj_flags, int modulus_len)
+static int
+itacns_add_pubkey(sc_pkcs15_card_t *p15card, const sc_path_t *path, const sc_pkcs15_id_t *id,
+		const char *label, int usage, int ref, int obj_flags, int modulus_len)
 {
 	int r;
 	sc_pkcs15_pubkey_info_t info;
@@ -289,12 +289,10 @@ static int itacns_add_pubkey(sc_pkcs15_card_t *p15card,
 	return r;
 }
 
-static int itacns_add_prkey(sc_pkcs15_card_t *p15card,
-                const sc_pkcs15_id_t *id,
-                const char *label,
-                int type, unsigned int modulus_length, int usage,
-		const sc_path_t *path, int ref,
-                const sc_pkcs15_id_t *auth_id, int obj_flags)
+static int
+itacns_add_prkey(sc_pkcs15_card_t *p15card, const sc_pkcs15_id_t *id, const char *label, int type,
+		unsigned int modulus_length, int usage, const sc_path_t *path, int ref, const sc_pkcs15_id_t *auth_id,
+		int obj_flags)
 {
 	sc_pkcs15_prkey_info_t info;
 	sc_pkcs15_object_t obj;
@@ -327,13 +325,9 @@ static int itacns_add_prkey(sc_pkcs15_card_t *p15card,
 	return sc_pkcs15emu_add_rsa_prkey(p15card, &obj, &info);
 }
 
-static int itacns_add_pin(sc_pkcs15_card_t *p15card,
-	char *label,
-	int id,
-	int auth_id,
-	int reference,
-	sc_path_t *path,
-	int flags)
+static int
+itacns_add_pin(sc_pkcs15_card_t *p15card, char *label, int id, int auth_id, int reference, sc_path_t *path,
+		int flags)
 {
 	struct sc_pkcs15_auth_info pin_info;
 	struct sc_pkcs15_object pin_obj;
@@ -575,11 +569,10 @@ static int itacns_add_data_files(sc_pkcs15_card_t *p15card)
 	return SC_SUCCESS;
 }
 
-static int itacns_add_keyset(sc_pkcs15_card_t *p15card,
-	const char *label, int sec_env, sc_pkcs15_id_t *cert_id,
-	const char *pubkey_path, const char *prkey_path,
-	unsigned int pubkey_usage_flags, unsigned int prkey_usage_flags,
-	u8 pin_ref, int modulus_len)
+static int
+itacns_add_keyset(sc_pkcs15_card_t *p15card, const char *label, int sec_env, sc_pkcs15_id_t *cert_id,
+		const char *pubkey_path, const char *prkey_path, unsigned int pubkey_usage_flags,
+		unsigned int prkey_usage_flags, u8 pin_ref, int modulus_len)
 {
 	int r;
 	sc_path_t path;
@@ -594,8 +587,7 @@ static int itacns_add_keyset(sc_pkcs15_card_t *p15card,
 		sc_format_path(pubkey_path, &path);
 		r = itacns_add_pubkey(p15card, &path, cert_id, label,
 			pubkey_usage_flags, sec_env, 0, modulus_len);
-		LOG_TEST_RET(p15card->card->ctx, r,
-			"Could not add public key");
+		LOG_TEST_RET(p15card->card->ctx, r, "Could not add public key");
 	}
 
 	/*
@@ -607,9 +599,9 @@ static int itacns_add_keyset(sc_pkcs15_card_t *p15card,
 		private_path = &path;
 	}
 	r = itacns_add_prkey(p15card, cert_id, label, SC_PKCS15_TYPE_PRKEY_RSA,
-		modulus_len,
-		prkey_usage_flags,
-		private_path, sec_env, cert_id, SC_PKCS15_CO_FLAG_PRIVATE);
+			modulus_len,
+			prkey_usage_flags,
+			private_path, sec_env, cert_id, SC_PKCS15_CO_FLAG_PRIVATE);
 	LOG_TEST_RET(p15card->card->ctx, r,
 		"Could not add private key");
 
@@ -649,10 +641,10 @@ static int itacns_add_keyset(sc_pkcs15_card_t *p15card,
  * otherwise it aborts.
  */
 
-static int itacns_check_and_add_keyset(sc_pkcs15_card_t *p15card,
-	const char *label, int sec_env, size_t cert_offset,
-	const char *cert_path, const char *pubkey_path, const char *prkey_path,
-	u8 pin_ref, int *found_certificates)
+static int
+itacns_check_and_add_keyset(sc_pkcs15_card_t *p15card, const char *label, int sec_env, size_t cert_offset,
+		const char *cert_path, const char *pubkey_path, const char *prkey_path, u8 pin_ref,
+		int *found_certificates)
 {
 	int r;
 	sc_path_t path;
@@ -704,7 +696,7 @@ static int itacns_check_and_add_keyset(sc_pkcs15_card_t *p15card,
 	}
 
 	r = itacns_add_cert(p15card, SC_PKCS15_TYPE_CERT_X509, 0,
-		&path, &cert_id, label, 0, &ext_info_ok, &ku, &xku, &modulus_len);
+			&path, &cert_id, label, 0, &ext_info_ok, &ku, &xku, &modulus_len);
 	if (r == SC_ERROR_INVALID_ASN1_OBJECT)
 		return 0;
 	LOG_TEST_RET(p15card->card->ctx, r,
@@ -748,10 +740,9 @@ static int itacns_check_and_add_keyset(sc_pkcs15_card_t *p15card,
 	}
 
 	r = itacns_add_keyset(p15card, label, sec_env, &cert_id,
-		pubkey_path, prkey_path, pubkey_usage_flags, prkey_usage_flags,
-		pin_ref, modulus_len);
-	LOG_TEST_RET(p15card->card->ctx, r,
-		"Could not add keys for this certificate");
+			pubkey_path, prkey_path, pubkey_usage_flags, prkey_usage_flags,
+			pin_ref, modulus_len);
+	LOG_TEST_RET(p15card->card->ctx, r, "Could not add keys for this certificate");
 
 	return r;
 }

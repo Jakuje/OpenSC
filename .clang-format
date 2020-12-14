@@ -40,3 +40,8 @@ BraceWrapping:
   AfterObjCDeclaration: true
   AfterUnion:      true
   AfterFunction:   true
+
+# Requires clang 14
+#PenaltyBreakOpenParenthesis: 100
+PenaltyBreakBeforeFirstCallParameter: 100
+PenaltyExcessCharacter: 200

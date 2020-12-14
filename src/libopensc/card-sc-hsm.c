@@ -1528,9 +1528,7 @@ static int sc_hsm_register_public_key(sc_card_t *card,
 	r = verify_certificate(card, &pka.device.cvc, pka.device.ptr, pka.device.len);
 	LOG_TEST_GOTO_ERR(ctx, r, "Verify device CVC failed");
 
-	r = sc_asn1_put_tag(tag,
-			(u8 *)pka.public_key_req.cvc.outer_car,
-			pka.public_key_req.cvc.outerCARLen,
+	r = sc_asn1_put_tag(tag, (u8 *)pka.public_key_req.cvc.outer_car, pka.public_key_req.cvc.outerCARLen,
 			asn1_outer_car, sizeof(asn1_outer_car), &ptr);
 	LOG_TEST_GOTO_ERR(ctx, r, "ASN.1 encode outer CAR failed");
 
@@ -1543,8 +1541,7 @@ static int sc_hsm_register_public_key(sc_card_t *card,
 	r = sc_check_sw(card, apdu.sw1, apdu.sw2);
 	LOG_TEST_GOTO_ERR(ctx, r, "Check SW error");
 
-	sc_format_apdu_ex(&apdu, 0x80, 0x54, 0x00, 0x00,
-			pka.public_key_req.ptr, pka.public_key_req.len,
+	sc_format_apdu_ex(&apdu, 0x80, 0x54, 0x00, 0x00, pka.public_key_req.ptr, pka.public_key_req.len,
 			recvbuf, sizeof(recvbuf));
 
 	r = sc_transmit_apdu(card, &apdu);

@@ -35,8 +35,8 @@
 
 #ifdef ENABLE_OPENSSL
 #include <openssl/des.h>
-#include <openssl/sha.h>
 #include <openssl/evp.h>
+#include <openssl/sha.h>
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L
 #include <openssl/provider.h>
 #endif
@@ -407,7 +407,7 @@ static int cardos_sm4h(const unsigned char *in, size_t inlen, unsigned char
 	unsigned int i,j;
 	EVP_CIPHER_CTX *cctx = NULL;
 	int tmplen = 0;
-	unsigned char key1[8], key2[8]; 
+	unsigned char key1[8], key2[8];
 
 	if (keylen != 16) {
 		printf("key has wrong size, need 16 bytes, got %"SC_FORMAT_LEN_SIZE_T"d. aborting.\n",
@@ -442,7 +442,7 @@ static int cardos_sm4h(const unsigned char *in, size_t inlen, unsigned char
 	/* prepare des ctx */
 	memcpy(key1, key, 8);
 	memcpy(key2, key + 8, 8);
-	
+
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L
 	if (!legacy_provider) {
 		if (!(legacy_provider = OSSL_PROVIDER_try_load(NULL, "legacy", 1))) {
@@ -455,14 +455,14 @@ static int cardos_sm4h(const unsigned char *in, size_t inlen, unsigned char
 
 	cctx = EVP_CIPHER_CTX_new();
 	if (!cctx ||
-		!EVP_EncryptInit_ex(cctx, EVP_des_ecb(), NULL, key1, NULL) ||
-		!EVP_CIPHER_CTX_set_padding(cctx, 0)) {
+			!EVP_EncryptInit_ex(cctx, EVP_des_ecb(), NULL, key1, NULL) ||
+			!EVP_CIPHER_CTX_set_padding(cctx, 0)) {
 		printf("Can not setup context, aborting\n");
 		free(mac_input);
 		EVP_CIPHER_CTX_free(cctx);
 		return 0;
 	}
-    
+
 	/* first block: XOR with IV and encrypt with key A IV is 8 bytes 00 */
 	for (i=0; i < 8; i++) des_in[i] = mac_input[i]^00;
 	if (!EVP_EncryptUpdate(cctx, des_out, &tmplen, des_in, 8)) {
@@ -492,7 +492,7 @@ static int cardos_sm4h(const unsigned char *in, size_t inlen, unsigned char
 	/* now decrypt with key B and encrypt with key A again */
 	/* (a noop if key A and B are the same, e.g. 8 bytes ff */
 	if (!EVP_DecryptInit_ex(cctx, EVP_des_ecb(), NULL, key2, NULL) ||
-		!EVP_CIPHER_CTX_set_padding(cctx, 0)) {
+			!EVP_CIPHER_CTX_set_padding(cctx, 0)) {
 		printf("Can not setup context, aborting\n");
 		free(mac_input);
 		EVP_CIPHER_CTX_free(cctx);
@@ -513,13 +513,14 @@ static int cardos_sm4h(const unsigned char *in, size_t inlen, unsigned char
 	}
 
 	if (!EVP_EncryptInit_ex(cctx, EVP_des_ecb(), NULL, key1, NULL) ||
-		!EVP_CIPHER_CTX_set_padding(cctx, 0)) {
+			!EVP_CIPHER_CTX_set_padding(cctx, 0)) {
 		printf("Can not setup context, aborting\n");
 		free(mac_input);
 		EVP_CIPHER_CTX_free(cctx);
 		return 0;
 	}
-	for (i=0; i < 8; i++) des_in[i] = des_out[i];
+	for (i = 0; i < 8; i++)
+		des_in[i] = des_out[i];
 	if (!EVP_EncryptUpdate(cctx, des_out, &tmplen, des_in, 8)) {
 		printf("Can not encrypt, aborting\n");
 		free(mac_input);
@@ -536,7 +537,8 @@ static int cardos_sm4h(const unsigned char *in, size_t inlen, unsigned char
 	/* now we want to enc:
  	 * orig APDU data plus mac (8 bytes) plus iso padding (1-8 bytes) */
 	enc_input_len = plain_lc + 8 + 1;
-	while (enc_input_len % 8) enc_input_len++;
+	while (enc_input_len % 8)
+		enc_input_len++;
 
 	enc_input = calloc(1,enc_input_len);
 	if (!enc_input) {
@@ -545,7 +547,7 @@ static int cardos_sm4h(const unsigned char *in, size_t inlen, unsigned char
 		return 0;
 	}
 	if (plain_lc)
-		memcpy(&enc_input[0],&in[5],plain_lc);
+		memcpy(&enc_input[0], &in[5], plain_lc);
 	for (i=0; i < 8; i++) enc_input[i+plain_lc] = des_out[i];
 	enc_input[plain_lc+8] = 0x80; /* iso padding */
 	/* calloc already cleared the remaining bytes to 00 */
@@ -566,8 +568,8 @@ static int cardos_sm4h(const unsigned char *in, size_t inlen, unsigned char
 	/* encrypt first block */
 	cctx = EVP_CIPHER_CTX_new();
 	if (!cctx ||
-		!EVP_EncryptInit_ex(cctx, EVP_des_ede_ecb(), NULL, key, NULL) ||
-		!EVP_CIPHER_CTX_set_padding(cctx, 0)) {
+			!EVP_EncryptInit_ex(cctx, EVP_des_ede_ecb(), NULL, key, NULL) ||
+			!EVP_CIPHER_CTX_set_padding(cctx, 0)) {
 		printf("Can not setup context, aborting\n");
 		free(mac_input);
 		free(enc_input);
@@ -607,7 +609,7 @@ static int cardos_sm4h(const unsigned char *in, size_t inlen, unsigned char
 		/* copy encrypted bytes into output */
 		for (i=0; i < 8; i++) out[5+8*j+i] = des_out[i];
 	}
-	
+
 	EVP_CIPHER_CTX_free(cctx);
 	if (verbose)	{
 		printf ("Unencrypted APDU:\n");
@@ -1184,7 +1186,7 @@ int main(int argc, char *argv[])
 			util_print_usage_and_die(app_name, options, option_help, NULL);
 		}
 	}
-	
+
 	if (action_count == 0)
 		util_print_usage_and_die(app_name, options, option_help, NULL);
 

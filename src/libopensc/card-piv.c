@@ -4788,7 +4788,7 @@ static int piv_parse_discovery(sc_card_t *card, u8 * rbuf, size_t rbuflen, int a
 		aidlen = 0;
 		aid = sc_asn1_find_tag(card->ctx, body, bodylen, 0x4F, &aidlen);
 		if (aid == NULL || aidlen < piv_aids[0].len_short ||
-			memcmp(aid,piv_aids[0].value,piv_aids[0].len_short) != 0) {
+				memcmp(aid, piv_aids[0].value, piv_aids[0].len_short) != 0) {
 			sc_log(card->ctx, "Discovery object not PIV");
 			r = SC_ERROR_INVALID_CARD; /* This is an error */
 			goto err;
@@ -4798,10 +4798,9 @@ static int piv_parse_discovery(sc_card_t *card, u8 * rbuf, size_t rbuflen, int a
 			if (pinp && pinplen == 2) {
 				priv->init_flags |= PIV_INIT_DISCOVERY_PP;
 				priv->pin_policy = (*pinp << 8) + *(pinp + 1);
-				sc_log(card->ctx, "Discovery pinp flags=0x%2.2x 0x%2.2x",*pinp, *(pinp+1));
-				if ((priv->pin_policy & (PIV_PP_PIN | PIV_PP_GLOBAL))
-						== (PIV_PP_PIN | PIV_PP_GLOBAL)
-						&& priv->pin_policy & PIV_PP_GLOBAL_PRIMARY) {
+				sc_log(card->ctx, "Discovery pinp flags=0x%2.2x 0x%2.2x", *pinp, *(pinp + 1));
+				if ((priv->pin_policy & (PIV_PP_PIN | PIV_PP_GLOBAL)) == (PIV_PP_PIN | PIV_PP_GLOBAL) &&
+						priv->pin_policy & PIV_PP_GLOBAL_PRIMARY) {
 					sc_log(card->ctx, "Pin Preference - Global");
 					priv->pin_preference = 0x00;
 				}

@@ -21,7 +21,9 @@
 
 #include "p11test_case_mechs.h"
 
-void supported_mechanisms_test(void **state) {
+void
+supported_mechanisms_test(void **state)
+{
 	token_info_t *info = (token_info_t *) *state;
 	CK_FUNCTION_LIST_PTR function_pointer = info->function_pointer;
 
@@ -112,8 +114,8 @@ void supported_mechanisms_test(void **state) {
 			}
 
 			/* We list all known montgomery EC curve mechanisms */
-			if (mechanism_list[i] == CKM_XEDDSA
-					|| mechanism_list[i] == CKM_ECDH1_DERIVE) {
+			if (mechanism_list[i] == CKM_XEDDSA ||
+					mechanism_list[i] == CKM_ECDH1_DERIVE) {
 				if (token.num_montgomery_mechs < MAX_MECHS) {
 					mech = &token.montgomery_mechs[token.num_montgomery_mechs++];
 					mech->mech = mechanism_list[i];
@@ -124,26 +126,26 @@ void supported_mechanisms_test(void **state) {
 
 			/* We list all known secret key mechanisms */
 			if (mechanism_list[i] == CKM_AES_ECB ||
-			    mechanism_list[i] == CKM_AES_ECB_ENCRYPT_DATA ||
-			    mechanism_list[i] == CKM_AES_CBC ||
-			    mechanism_list[i] == CKM_AES_CBC_ENCRYPT_DATA ||
-			    mechanism_list[i] == CKM_AES_CBC_PAD ||
-			    mechanism_list[i] == CKM_AES_MAC ||
-			    mechanism_list[i] == CKM_AES_MAC_GENERAL ||
-			    mechanism_list[i] == CKM_AES_CFB64 ||
-			    mechanism_list[i] == CKM_AES_CFB8 ||
-			    mechanism_list[i] == CKM_AES_CFB128 ||
-			    mechanism_list[i] == CKM_AES_OFB ||
-			    mechanism_list[i] == CKM_AES_CTR ||
-			    mechanism_list[i] == CKM_AES_GCM ||
-			    mechanism_list[i] == CKM_AES_CCM ||
-			    mechanism_list[i] == CKM_AES_CTS ||
-			    mechanism_list[i] == CKM_AES_KEY_WRAP ||
-			    mechanism_list[i] == CKM_AES_KEY_WRAP_PAD ||
-			    mechanism_list[i] == CKM_AES_CMAC ||
-			    mechanism_list[i] == CKM_AES_CMAC_GENERAL ||
-			    mechanism_list[i] == CKM_AES_XCBC_MAC ||
-			    mechanism_list[i] == CKM_AES_XCBC_MAC_96) {
+					mechanism_list[i] == CKM_AES_ECB_ENCRYPT_DATA ||
+					mechanism_list[i] == CKM_AES_CBC ||
+					mechanism_list[i] == CKM_AES_CBC_ENCRYPT_DATA ||
+					mechanism_list[i] == CKM_AES_CBC_PAD ||
+					mechanism_list[i] == CKM_AES_MAC ||
+					mechanism_list[i] == CKM_AES_MAC_GENERAL ||
+					mechanism_list[i] == CKM_AES_CFB64 ||
+					mechanism_list[i] == CKM_AES_CFB8 ||
+					mechanism_list[i] == CKM_AES_CFB128 ||
+					mechanism_list[i] == CKM_AES_OFB ||
+					mechanism_list[i] == CKM_AES_CTR ||
+					mechanism_list[i] == CKM_AES_GCM ||
+					mechanism_list[i] == CKM_AES_CCM ||
+					mechanism_list[i] == CKM_AES_CTS ||
+					mechanism_list[i] == CKM_AES_KEY_WRAP ||
+					mechanism_list[i] == CKM_AES_KEY_WRAP_PAD ||
+					mechanism_list[i] == CKM_AES_CMAC ||
+					mechanism_list[i] == CKM_AES_CMAC_GENERAL ||
+					mechanism_list[i] == CKM_AES_XCBC_MAC ||
+					mechanism_list[i] == CKM_AES_XCBC_MAC_96) {
 				if (token.num_aes_mechs < MAX_MECHS) {
 					mech = &token.aes_mechs[token.num_aes_mechs++];
 					mech->mech = mechanism_list[i];
@@ -187,4 +189,3 @@ void supported_mechanisms_test(void **state) {
 	}
 	P11TEST_PASS(info);
 }
-

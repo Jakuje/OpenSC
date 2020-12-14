@@ -388,16 +388,16 @@ static int refresh_attributes(sc_reader_t *reader)
 		}
 
 		/* the system could not detect the reader. It means, the previously attached reader is disconnected. */
-		if (rv == (LONG)SCARD_E_UNKNOWN_READER
+		if (rv == (LONG)SCARD_E_UNKNOWN_READER ||
 #ifdef SCARD_E_NO_READERS_AVAILABLE
-				|| rv == (LONG)SCARD_E_NO_READERS_AVAILABLE
+				rv == (LONG)SCARD_E_NO_READERS_AVAILABLE ||
 #endif
-				|| rv == (LONG)SCARD_E_SERVICE_STOPPED) {
- 			reader->flags &= ~(SC_READER_CARD_PRESENT);
+				rv == (LONG)SCARD_E_SERVICE_STOPPED) {
+			reader->flags &= ~(SC_READER_CARD_PRESENT);
 			reader->flags |= SC_READER_REMOVED;
 			priv->gpriv->removed_reader = reader;
- 			SC_FUNC_RETURN(reader->ctx, SC_LOG_DEBUG_VERBOSE, SC_SUCCESS);
- 		}
+			SC_FUNC_RETURN(reader->ctx, SC_LOG_DEBUG_VERBOSE, SC_SUCCESS);
+		}
 
 		PCSC_TRACE(reader, "SCardGetStatusChange failed", rv);
 		return pcsc_to_opensc_error(rv);
@@ -1223,8 +1223,7 @@ static void detect_reader_features(sc_reader_t *reader, SCARDHANDLE card_handle)
 	/* Detect display */
 	if (priv->pin_properties_ioctl) {
 		rcount = sizeof(buf);
-		rv = gpriv->SCardControl(card_handle, priv->pin_properties_ioctl,
-			NULL, 0, buf, sizeof(buf), &rcount);
+		rv = gpriv->SCardControl(card_handle, priv->pin_properties_ioctl, NULL, 0, buf, sizeof(buf), &rcount);
 		if (rv == SCARD_S_SUCCESS) {
 #ifdef PIN_PROPERTIES_v5
 			if (rcount == sizeof(PIN_PROPERTIES_STRUCTURE_v5)) {
@@ -1318,9 +1317,8 @@ static void detect_reader_features(sc_reader_t *reader, SCARDHANDLE card_handle)
 
 	if (gpriv->SCardGetAttrib != NULL) {
 		rcount = sizeof(buf);
-		if (gpriv->SCardGetAttrib(card_handle, SCARD_ATTR_VENDOR_NAME,
-					buf, &rcount) == SCARD_S_SUCCESS
-				&& rcount > 0) {
+		if (gpriv->SCardGetAttrib(card_handle, SCARD_ATTR_VENDOR_NAME, buf, &rcount) == SCARD_S_SUCCESS &&
+				rcount > 0) {
 			/* add NUL termination, just in case... */
 			buf[(sizeof buf)-1] = '\0';
 			reader->vendor = strdup((char *) buf);

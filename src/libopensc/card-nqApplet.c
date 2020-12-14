@@ -21,11 +21,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "opensc.h"
 #include "asn1.h"
 #include "cardctl.h"
 #include "internal.h"
 #include "log.h"
+#include "opensc.h"
 
 #define APPLET_VERSION_LEN  2
 #define APPLET_MEMTYPE_LEN  1
@@ -102,8 +102,9 @@ static int init_driver_data(sc_card_t *card, u8 version_major, u8 version_minor)
  * @return SC_SUCCESS: The applet is present and selected.
  *
  */
-static int select_nqapplet(sc_card_t *card, u8 *version_major, u8 *version_minor, u8 *serial_nr,
-                           size_t cb_serial_nr, size_t *serial_nr_len)
+static int
+select_nqapplet(sc_card_t *card, u8 *version_major, u8 *version_minor, u8 *serial_nr, size_t cb_serial_nr,
+		size_t *serial_nr_len)
 {
 	int rv;
 	sc_context_t *ctx = card->ctx;
@@ -157,8 +158,8 @@ static int nqapplet_init(struct sc_card *card)
 	unsigned long rsa_flags = 0;
 
 	LOG_FUNC_CALLED(card->ctx);
-	int rv =
-		select_nqapplet(card, &version_major, &version_minor, serial_nr, cb_serial_nr, &cb_serial_nr);
+	int rv = select_nqapplet(card, &version_major, &version_minor, serial_nr, cb_serial_nr,
+			&cb_serial_nr);
 	if (rv != SC_SUCCESS) {
 		LOG_TEST_RET(card->ctx, SC_ERROR_INVALID_CARD, "Cannot select NQ-Applet.");
 	}
@@ -271,7 +272,7 @@ int nqapplet_set_security_env(struct sc_card *card, const struct sc_security_env
 
 	if (se_num != 0) {
 		LOG_TEST_RET(card->ctx, SC_ERROR_NOT_SUPPORTED,
-		             "Storing of security environment is not supported");
+				"Storing of security environment is not supported");
 	}
 	if (env->key_ref_len == 1) {
 		key_reference = env->key_ref[0];
@@ -281,14 +282,14 @@ int nqapplet_set_security_env(struct sc_card *card, const struct sc_security_env
 	case SC_SEC_OPERATION_DECIPHER:
 		if (key_reference != KEY_REFERENCE_AUTH_KEY && key_reference != KEY_REFERENCE_ENCR_KEY) {
 			LOG_TEST_RET(card->ctx, SC_ERROR_INCOMPATIBLE_KEY,
-			             "Decipher operation is only supported with AUTH and ENCR keys.");
+					"Decipher operation is only supported with AUTH and ENCR keys.");
 		}
 		data->key_reference = key_reference;
 		break;
 	case SC_SEC_OPERATION_SIGN:
 		if (key_reference != KEY_REFERENCE_AUTH_KEY) {
 			LOG_TEST_RET(card->ctx, SC_ERROR_INCOMPATIBLE_KEY,
-			             "Sign operation is only supported with AUTH key.");
+					"Sign operation is only supported with AUTH key.");
 		}
 		data->key_reference = key_reference;
 		break;
@@ -316,7 +317,7 @@ static int nqapplet_decipher(struct sc_card *card, const u8 *data, size_t cb_dat
 		p2 = 0x9A;
 	} else if (drv_data->key_reference != KEY_REFERENCE_ENCR_KEY) {
 		LOG_TEST_RET(card->ctx, SC_ERROR_INCOMPATIBLE_KEY,
-		             "Decipher operation is only supported with AUTH and ENCR keys.");
+				"Decipher operation is only supported with AUTH and ENCR keys.");
 	}
 
 	/* the applet supports only 3072 RAW RSA, input buffer size must be 384 octets,
@@ -350,7 +351,7 @@ static int nqapplet_compute_signature(struct sc_card *card, const u8 *data, size
 
 	if (drv_data->key_reference != KEY_REFERENCE_AUTH_KEY) {
 		LOG_TEST_RET(card->ctx, SC_ERROR_INCOMPATIBLE_KEY,
-		             "Sign operation is only supported with AUTH key.");
+				"Sign operation is only supported with AUTH key.");
 	}
 
 	/* the applet supports only 3072 RAW RSA, input buffer size must be 384 octets,
@@ -421,7 +422,7 @@ static int nqapplet_select_file(struct sc_card *card, const struct sc_path *in_p
 	/* the applet does not support SELECT EF/DF except for SELECT APPLET.
 	In order to enable opensc-explorer add support for virtually selecting MF only */
 	if (in_path->type == SC_PATH_TYPE_PATH && in_path->len == 2 &&
-	    memcmp(in_path->value, "\x3F\x00", 2) == 0) {
+			memcmp(in_path->value, "\x3F\x00", 2) == 0) {
 		if (file_out != NULL) {
 			struct sc_file *file = sc_file_new();
 			if (file == NULL) {

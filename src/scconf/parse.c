@@ -72,9 +72,7 @@ static void scconf_parse_warning_expect(scconf_parser * parser, const char *toke
 	/* FIXME: save the warnings somewhere */
 	parser->warnings = 1;
 
-	snprintf(parser->emesg, sizeof(parser->emesg),
-		"Line %d: missing '%s', ignoring\n",
-		parser->line, token);
+	snprintf(parser->emesg, sizeof(parser->emesg), "Line %d: missing '%s', ignoring\n", parser->line, token);
 }
 
 static scconf_item *scconf_item_find(scconf_parser * parser)
@@ -82,9 +80,8 @@ static scconf_item *scconf_item_find(scconf_parser * parser)
 	scconf_item *item;
 
 	for (item = parser->block->items; item; item = item->next) {
-		if (item && item->type == SCCONF_ITEM_TYPE_VALUE
-			   	&& item->key && parser->key
-			   	&& strcasecmp(item->key, parser->key) == 0) {
+		if (item && item->type == SCCONF_ITEM_TYPE_VALUE && item->key && parser->key &&
+				strcasecmp(item->key, parser->key) == 0) {
 			return item;
 		}
 	}
@@ -123,7 +120,9 @@ static scconf_item *scconf_item_add_internal(scconf_parser * parser, int type)
 	return item;
 }
 
-scconf_item *scconf_item_add(scconf_context * config, scconf_block * block, scconf_item * item, int type, const char *key, const void *data)
+scconf_item *
+scconf_item_add(scconf_context *config, scconf_block *block, scconf_item *item, int type, const char *key,
+		const void *data)
 {
 	scconf_parser parser;
 	scconf_block *dst = NULL;
@@ -369,9 +368,7 @@ void scconf_parse_token(scconf_parser * parser, int token_type, const char *toke
 			scconf_parse_reset_state(parser);
 			break;
 		default:
-			snprintf(parser->emesg, sizeof(parser->emesg),
-				"Line %d: bad token ignoring\n",
-				parser->line);
+			snprintf(parser->emesg, sizeof(parser->emesg), "Line %d: bad token ignoring\n", parser->line);
 		}
 		break;
 	}
@@ -392,9 +389,7 @@ int scconf_parse(scconf_context * config)
 	p.nested_blocks = 0;
 
 	if (!scconf_lex_parse(&p, config->filename)) {
-		snprintf(buffer, sizeof(buffer),
-				"Unable to open \"%s\": %s",
-				config->filename, strerror(errno));
+		snprintf(buffer, sizeof(buffer), "Unable to open \"%s\": %s", config->filename, strerror(errno));
 		r = -1;
 	} else if (p.error) {
 		strlcpy(buffer, p.emesg, sizeof(buffer));
