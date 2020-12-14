@@ -72,7 +72,6 @@ static const pgp_pin_cfg_t	pin_cfg_v2[3] = {
 };
 // clang-format on
 
-
 #define PGP_SIG_PRKEY_USAGE	(SC_PKCS15_PRKEY_USAGE_SIGN \
 				| SC_PKCS15_PRKEY_USAGE_SIGNRECOVER \
 				| SC_PKCS15_PRKEY_USAGE_NONREPUDIATION)

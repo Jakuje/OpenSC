@@ -129,7 +129,6 @@ static void		pgp_free_blob(pgp_blob_t *);
 static int		pgp_get_pubkey(sc_card_t *, unsigned int, u8 *, size_t);
 static int		pgp_get_pubkey_pem(sc_card_t *, unsigned int, u8 *, size_t);
 
-
 // clang-format off
 static pgp_do_info_t	pgp1x_objects[] = {	/* OpenPGP card spec 1.1 */
 	{ 0x004f, SIMPLE,      READ_ALWAYS | WRITE_NEVER, NULL,               NULL        },
