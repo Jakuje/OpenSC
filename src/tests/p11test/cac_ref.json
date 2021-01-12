@@ -155,6 +155,10 @@
 	"result": "pass"
 },
 {
+	"test_id": "interface_test",
+	"result": "pass"
+},
+{
 	"test_id": "readonly_tests",
 	"data": [
 	[
