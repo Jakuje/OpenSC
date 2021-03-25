@@ -51,13 +51,13 @@
 		"CKF_DIGEST"
 	],
 	[
-		"0x00000240",
+		"RIPEMD160",
 		"0",
 		"0",
 		"CKF_DIGEST"
 	],
 	[
-		"0x00001210",
+		"GOSTR3411",
 		"0",
 		"0",
 		"CKF_DIGEST"
