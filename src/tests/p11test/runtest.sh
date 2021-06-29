@@ -128,10 +128,14 @@ function card_setup() {
 		fi
 		if [[ $EDDSA -eq 1 ]]; then
 			# Generate Ed25519
-			generate_cert "EC:edwards25519" "05" "EDDSA" 0
+			generate_cert "EC:edwards25519" "05" "EDDSA" 1
+			# Generate Ed448 -- broken in softhsm
+			generate_cert "EC:edwards448" "06" "ED448" 0
 			# Generate curve25519
-			#generate_cert "EC:curve25519" "06" "Curve25519" 0
-			# not supported by softhsm either
+			# generate_cert "EC:curve25519" "07" "Curve25519" 1
+			# Generate curve448
+			# generate_cert "EC:curve448" "08" "Curve448" 1
+			# not supported by softhsm at all
 		fi
 	fi
 }
@@ -149,10 +153,10 @@ card_setup "$@"
 make p11test || exit
 if [[ "$PKCS11SPY" != "" ]]; then
 	export PKCS11SPY="$P11LIB"
-	$VALGRIND ./p11test -m ../../pkcs11/.libs/pkcs11-spy.so -p $PIN &> /tmp/spy.log
+	$VALGRIND ./p11test -v -m ../../pkcs11/.libs/pkcs11-spy.so -p $PIN &> /tmp/spy.log
 else
 	#bash
-	$VALGRIND ./p11test -m "$P11LIB" -o test.json -p $PIN
+	$VALGRIND ./p11test -v -m "$P11LIB" -o test.json -p $PIN
 fi
 
 card_cleanup "$@"

@@ -124,7 +124,8 @@ static struct ec_curve_info {
 
 	{"edwards25519","1.3.6.1.4.1159.15.1", "130c656477617264733235353139", 255, CKM_EC_EDWARDS_KEY_PAIR_GEN},
 	{"curve25519", "1.3.6.1.4.3029.1.5.1", "130b63757276653235353139", 255, CKM_EC_MONTGOMERY_KEY_PAIR_GEN},
-
+	{"edwards448","1.3.101.113", "06032B6571", 448, CKM_EC_EDWARDS_KEY_PAIR_GEN},
+	{"curve448", "1.3.101.111", "06032B656F", 448, CKM_EC_MONTGOMERY_KEY_PAIR_GEN},
 	{NULL, NULL, NULL, 0, 0},
 };
 
@@ -297,7 +298,7 @@ static const char *option_help[] = {
 	"Unlock User PIN (without '--login' unlock in logged in session; otherwise '--login-type' has to be 'context-specific')",
 	"Key pair generation",
 	"Key generation",
-	"Specify the type and length (bytes if symmetric) of the key to create, for example rsa:1024, EC:prime256v1, EC:ed25519, EC:curve25519, GOSTR3410-2012-256:B, AES:16 or GENERIC:64",
+	"Specify the type and length (bytes if symmetric) of the key to create, for example rsa:1024, EC:prime256v1, EC:ed25519, EC:ed448, EC:curve25519, ED:curve448, GOSTR3410-2012-256:B, AES:16 or GENERIC:64",
 	"Specify 'sign' key usage flag (sets SIGN in privkey, sets VERIFY in pubkey)",
 	"Specify 'decrypt' key usage flag (RSA only, set DECRYPT privkey, ENCRYPT in pubkey)",
 	"Specify 'derive' key usage flag (EC only)",
@@ -4193,7 +4194,14 @@ show_key(CK_SESSION_HANDLE sess, CK_OBJECT_HANDLE obj)
 			unsigned int n;
 
 			bytes = getEC_POINT(sess, obj, &size);
-			ksize = 255; /* for now, we support only 255b curves */
+			if (size == 32 + 2) {
+				ksize = 255;
+			} else if (size == 57 + 2) {
+				ksize = 448;
+			} else {
+				/* this should probably be an error */
+				ksize = (size - 2) * 8;
+			}
 
 			printf("  EC_POINT %u bits\n", ksize);
 			if (bytes) {
@@ -4787,12 +4795,13 @@ static int read_object(CK_SESSION_HANDLE session)
 				util_fatal("cannot convert EC public key to DER");
 			EC_KEY_free(ec);
 #endif
-#ifdef EVP_PKEY_ED25519
-		} else if (type == CKK_EC_EDWARDS) {
+#if defined(EVP_PKEY_ED25519) && defined(EVP_PKEY_ED448) && defined(EVP_PKEY_X25519) && defined(EVP_PKEY_X448)
+		} else if ((type == CKK_EC_EDWARDS) || (type == CKK_EC_MONTGOMERY)) {
 			EVP_PKEY *key = NULL;
 			CK_BYTE *params = NULL;
 			const unsigned char *a;
 			ASN1_OCTET_STRING *os;
+			int type = 0;
 
 			if ((params = getEC_PARAMS(session, obj, &len))) {
 				ASN1_PRINTABLESTRING *curve = NULL;
@@ -4800,16 +4809,48 @@ static int read_object(CK_SESSION_HANDLE session)
 
 				a = params;
 				if (d2i_ASN1_PRINTABLESTRING(&curve, &a, (long)len) != NULL) {
-					if (strcmp((char *)curve->data, "edwards25519")) {
-						util_fatal("Unknown curve name, expected edwards25519, got %s",
-							curve->data);
+					if (type == CKK_EC_EDWARDS) {
+						if (strcmp((char *)curve->data, "edwards25519") == 0) {
+							type = EVP_PKEY_ED25519;
+						} else if (strcmp((char *)curve->data, "edwards448") == 0) {
+							type = EVP_PKEY_ED448;
+						} else {
+							util_fatal("Unknown curve name, expected edwards25519"
+								" or edwards448, got %s", curve->data);
+						}
+					} else if (type == CKK_EC_MONTGOMERY) {
+						if (strcmp((char *)curve->data, "curve25519") == 0) {
+							type = EVP_PKEY_X25519;
+						} else if (strcmp((char *)curve->data, "curve448") == 0) {
+							type = EVP_PKEY_X448;
+						} else {
+							util_fatal("Unknown curve name, expected curve25519"
+								" or curve448, got %s", curve->data);
+						}
 					}
 					ASN1_PRINTABLESTRING_free(curve);
 				} else if (d2i_ASN1_OBJECT(&obj, &a, (long)len) != NULL) {
 					int nid = OBJ_obj2nid(obj);
-					if (nid != NID_ED25519) {
-						util_fatal("Unknown curve OID, expected NID_ED25519 (%d), got %d",
-							NID_ED25519, nid);
+					if (type == CKK_EC_EDWARDS) {
+						if (nid == NID_ED25519) {
+							type = EVP_PKEY_ED25519;
+						} else if (nid != NID_ED448) {
+							type = EVP_PKEY_ED448;
+						} else {
+							util_fatal("Unknown curve OID, expected "
+								"NID_ED25519 (%d) or NID_ED448 (%d), got %d",
+								NID_ED25519, NID_ED448, nid);
+						}
+					} else if (type == CKK_EC_MONTGOMERY) {
+						if (nid == NID_X25519) {
+							type = EVP_PKEY_X25519;
+						} else if (nid != NID_X448) {
+							type = EVP_PKEY_X448;
+						} else {
+							util_fatal("Unknown curve OID, expected "
+								"NID_X25519 (%d) or NID_X448 (%d), got %d",
+								NID_X25519, NID_X448, nid);
+						}
 					}
 					ASN1_OBJECT_free(obj);
 				} else {
@@ -4820,7 +4861,6 @@ static int read_object(CK_SESSION_HANDLE session)
 				util_fatal("cannot obtain EC_PARAMS");
 			}
 
-
 			value = getEC_POINT(session, obj, &len);
 			/* PKCS#11-compliant modules should return ASN1_OCTET_STRING */
 			a = value;
@@ -4828,10 +4868,11 @@ static int read_object(CK_SESSION_HANDLE session)
 			if (!os) {
 				util_fatal("cannot decode EC_POINT");
 			}
-			if (os->length != 32) {
+			if (((type == EVP_PKEY_ED25519 || type == EVP_PKEY_X25519) && os->length != 32) ||
+			    ((type == EVP_PKEY_ED448 || type == EVP_PKEY_X448) && os->length != 57)) {
 				util_fatal("Invalid length of EC_POINT value");
 			}
-			key = EVP_PKEY_new_raw_public_key(EVP_PKEY_ED25519, NULL,
+			key = EVP_PKEY_new_raw_public_key(type, NULL,
 				(const uint8_t *)os->data,
 				os->length);
 			ASN1_STRING_free(os);

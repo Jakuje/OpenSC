@@ -452,11 +452,15 @@ static struct sc_asn1_pkcs15_algorithm_info algorithm_table[] = {
 	/* aka Ed25519 */
 	/* RFC 8410, needed to parse/create X509 certs/pubkeys */
 	{ SC_ALGORITHM_EDDSA, {{1, 3, 101, 112, -1}}, NULL, NULL, NULL },
+	/* aka Ed448 */
+	{ SC_ALGORITHM_EDDSA, {{1, 3, 101, 113, -1}}, NULL, NULL, NULL },
 #endif
 #ifdef SC_ALGORITHM_XEDDSA
 	/* aka curve25519 */
 	/* RFC 8410, needed to parse/create X509 certs/pubkeys */
 	{ SC_ALGORITHM_XEDDSA, {{1, 3, 101, 110, -1}}, NULL, NULL, NULL },
+	/* aka curve448 */
+	{ SC_ALGORITHM_XEDDSA, {{1, 3, 101, 111, -1}}, NULL, NULL, NULL },
 #endif
 	{ -1, {{ -1 }}, NULL, NULL, NULL }
 };

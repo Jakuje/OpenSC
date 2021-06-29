@@ -87,7 +87,8 @@ pkcs11_derive(test_cert_t *o, token_info_t * info,
 	return get_value.ulValueLen;
 }
 
-int test_derive_x25519(test_cert_t *o, token_info_t *info, test_mech_t *mech)
+static int
+test_derive_xeddsa(test_cert_t *o, token_info_t *info, test_mech_t *mech)
 {
 	unsigned char *secret = NULL, *pkcs11_secret = NULL;
 	EVP_PKEY_CTX *pctx = NULL;
@@ -101,13 +102,13 @@ int test_derive_x25519(test_cert_t *o, token_info_t *info, test_mech_t *mech)
 		return 1;
 	}
 
-	if (o->type != EVP_PKEY_X25519) {
-		debug_print(" [ KEY %s ] Skip non-EC key for derive", o->id_str);
+	if (o->type != EVP_PKEY_X25519 && o->type != EVP_PKEY_X448) {
+		debug_print(" [ KEY %s ] Skip non-XEDDSA key for derive", o->id_str);
 		return 1;
 	}
 
 	/* First, we need to generate our key */
-	pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_X25519, NULL);
+	pctx = EVP_PKEY_CTX_new_id(o->type, NULL);
 	if (pctx == NULL) {
 		debug_print(" [ KEY %s ] EVP_PKEY_CTX_new_id failed", o->id_str);
 		return 1;
@@ -210,7 +211,8 @@ int test_derive_x25519(test_cert_t *o, token_info_t *info, test_mech_t *mech)
 	return 1;
 }
 
-int test_derive(test_cert_t *o, token_info_t *info, test_mech_t *mech)
+static int
+test_derive(test_cert_t *o, token_info_t *info, test_mech_t *mech)
 {
 	int nid, field_size;
 	EC_KEY *key = NULL;
@@ -345,7 +347,7 @@ void derive_tests(void **state) {
 					&(o->mechs[j]));
 				break;
 			case CKK_EC_MONTGOMERY:
-				errors += test_derive_x25519(&(objects.data[i]), info,
+				errors += test_derive_xeddsa(&(objects.data[i]), info,
 					&(o->mechs[j]));
 				break;
 			default:

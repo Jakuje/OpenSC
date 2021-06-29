@@ -774,8 +774,7 @@ sc_pkcs15_encode_pubkey_ec(sc_context_t *ctx, struct sc_pkcs15_pubkey_ec *key,
 }
 
 /*
- * EdDSA keys are just byte strings. For now only
- * for Ed25519 keys 32B length are supported
+ * EdDSA keys are just byte strings. We support Ed25519 and Ed448 keys
  */
 int
 sc_pkcs15_decode_pubkey_eddsa(sc_context_t *ctx,
@@ -827,8 +826,7 @@ sc_pkcs15_encode_pubkey(sc_context_t *ctx, struct sc_pkcs15_pubkey *key,
 		return sc_pkcs15_encode_pubkey_gostr3410(ctx, &key->u.gostr3410, buf, len);
 	if (key->algorithm == SC_ALGORITHM_EC)
 		return sc_pkcs15_encode_pubkey_ec(ctx, &key->u.ec, buf, len);
-	if (key->algorithm == SC_ALGORITHM_EDDSA ||
-		key->algorithm == SC_ALGORITHM_XEDDSA) /* XXX encoding is the same here */
+	if (key->algorithm == SC_ALGORITHM_EDDSA || key->algorithm == SC_ALGORITHM_XEDDSA)
 		return sc_pkcs15_encode_pubkey_eddsa(ctx, &key->u.eddsa, buf, len);
 
 	sc_log(ctx, "Encoding of public key type %u not supported", key->algorithm);
@@ -1627,6 +1625,9 @@ static struct ec_curve_info {
 
 		{"ed25519",		"1.3.6.1.4.1.11591.15.1", "06092B06010401DA470F01", 255},
 		{"curve25519",		"1.3.6.1.4.1.3029.1.5.1", "060A2B060104019755010501", 255},
+		/* FIXME not sure if this is the correct one */
+		{"ed448",		"1.3.101.111", "06032B656F", 448},
+		{"curve448",		"1.3.101.113", "06032B6571", 448},
 
 		{NULL, NULL, NULL, 0}, /* Do not touch this */
 };
@@ -1827,11 +1828,19 @@ sc_pkcs15_convert_pubkey(struct sc_pkcs15_pubkey *pkcs15_key, void *evp_key)
 	}
 #endif /* !defined(OPENSSL_NO_EC) */
 #ifdef EVP_PKEY_ED25519
-	case EVP_PKEY_ED25519: {
+	case EVP_PKEY_ED25519:
+#endif /* EVP_PKEY_ED25519 */
+#ifdef EVP_PKEY_X25519
+	case EVP_PKEY_X25519:
+#endif /* EVP_PKEY_X25519 */
+#ifdef EVP_PKEY_ED448
+	case EVP_PKEY_ED448:
+#endif /* EVP_PKEY_ED448 */
+#ifdef EVP_PKEY_X448
+	case EVP_PKEY_X448:
+#endif /* EVP_PKEY_X448 */
 		/* TODO */
 		break;
-	}
-#endif /* EVP_PKEY_ED25519 */
 	default:
 		return SC_ERROR_NOT_SUPPORTED;
 	}

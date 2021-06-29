@@ -458,7 +458,7 @@ int verify_message_openssl(test_cert_t *o, token_info_t *info, CK_BYTE *message,
 				rv, ERR_error_string(ERR_peek_last_error(), NULL));
 			return -1;
 		}
-	} else if (o->type == EVP_PKEY_ED25519) {
+	} else if (o->type == EVP_PKEY_ED25519 || o->type == EVP_PKEY_ED448) {
 		/* need to be created even though we do not do any MD */
 		EVP_MD_CTX *ctx = EVP_MD_CTX_create();
 
@@ -577,7 +577,10 @@ int sign_verify_test(test_cert_t *o, token_info_t *info, test_mech_t *mech,
 		return 0;
 	}
 
-	if (o->type != EVP_PK_EC && o->type != EVP_PK_RSA && o->type != EVP_PKEY_ED25519) {
+	if (o->type != EVP_PK_EC &&
+	    o->type != EVP_PK_RSA &&
+	    o->type != EVP_PKEY_ED25519 &&
+	    o->type != EVP_PKEY_ED448) {
 		debug_print(" [SKIP %s ] Skip non-RSA and non-EC key", o->id_str);
 		return 0;
 	}

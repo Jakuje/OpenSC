@@ -145,7 +145,7 @@ add_supported_mechs(test_cert_t *o)
 			o->mechs[0].result_flags = 0;
 			o->mechs[0].usage_flags = CKF_SIGN | CKF_VERIFY;
 		}
-	} else if (o->type == EVP_PKEY_ED25519) {
+	} else if (o->type == EVP_PKEY_ED25519 || o->type == EVP_PKEY_ED448) {
 		if (token.num_ed_mechs > 0 ) {
 			o->num_mechs = token.num_ed_mechs;
 			for (i = 0; i < token.num_ed_mechs; i++) {
@@ -161,7 +161,7 @@ add_supported_mechs(test_cert_t *o)
 			o->mechs[0].result_flags = 0;
 			o->mechs[0].usage_flags = CKF_SIGN | CKF_VERIFY;
 		}
-	} else if (o->type == EVP_PKEY_X25519) {
+	} else if (o->type == EVP_PKEY_X25519 || o->type == EVP_PKEY_X448) {
 		if (token.num_montgomery_mechs > 0 ) {
 			o->num_mechs = token.num_montgomery_mechs;
 			for (i = 0; i < token.num_ed_mechs; i++) {
@@ -439,24 +439,30 @@ int callback_public_keys(test_certs_t *objects,
 		ASN1_OBJECT *obj = NULL;
 		const unsigned char *a;
 		ASN1_OCTET_STRING *os;
-		int evp_type;
+		int evp_type = 0;
 
 		a = template[6].pValue;
 		if (d2i_ASN1_PRINTABLESTRING(&curve, &a, (long)template[6].ulValueLen) != NULL) {
 			switch (o->key_type) {
 			case CKK_EC_EDWARDS:
-				if (strcmp((char *)curve->data, "edwards25519")) {
-					debug_print(" [WARN %s ] Unknown curve name. "
-						" expected edwards25519, got %s", o->id_str, curve->data);
+				if (strcmp((char *)curve->data, "edwards25519") == 0) {
+					evp_type = EVP_PKEY_ED25519;
+				} else if (strcmp((char *)curve->data, "edwards448") == 0) {
+					evp_type = EVP_PKEY_ED448;
+				} else {
+					debug_print(" [WARN %s ] Unknown curve name. Expected"
+						" edwards25519 or edwards448, got %s", o->id_str, curve->data);
 				}
-				evp_type = EVP_PKEY_ED25519;
 				break;
 			case CKK_EC_MONTGOMERY:
-				if (strcmp((char *)curve->data, "curve25519")) {
-					debug_print(" [WARN %s ] Unknown curve name. "
-						" expected curve25519, got %s", o->id_str, curve->data);
+				if (strcmp((char *)curve->data, "curve25519") == 0) {
+					evp_type = EVP_PKEY_X25519;
+				} else if (strcmp((char *)curve->data, "curve448") == 0) {
+					evp_type = EVP_PKEY_X448;
+				} else {
+					debug_print(" [WARN %s ] Unknown curve name. Expected"
+						" curve25519 or curve448, got %s", o->id_str, curve->data);
 				}
-				evp_type = EVP_PKEY_X25519;
 				break;
 			default:
 				debug_print(" [WARN %s ] Unknown key type %lu", o->id_str, o->key_type);
@@ -469,18 +475,27 @@ int callback_public_keys(test_certs_t *objects,
 
 			switch (o->key_type) {
 			case CKK_EC_EDWARDS:
-				if (nid != NID_ED25519) {
-					debug_print(" [WARN %s ] Unknown OID. "
-						" expected NID_ED25519 (%d), got %d", o->id_str, NID_ED25519, nid);
+				if (nid == NID_ED25519) {
+					evp_type = EVP_PKEY_ED25519;
+				} else if (nid == NID_ED448) {
+					evp_type = EVP_PKEY_ED448;
+				} else {
+					debug_print(" [WARN %s ] Unknown OID. Expected NID_ED25519 (%d)"
+						" or NID_ED448 (%d), got %d", o->id_str, NID_ED25519, NID_ED448, nid);
+					/* XXX softhsm is broken */
+					evp_type = EVP_PKEY_ED448;
 				}
-				evp_type = EVP_PKEY_ED25519;
 				break;
 			case CKK_EC_MONTGOMERY:
-				if (nid != NID_X25519) {
-					debug_print(" [WARN %s ] Unknown OID. "
-						" expected NID_X25519 (%d), got %d", o->id_str, NID_X25519, nid);
+				if (nid == NID_X25519) {
+					evp_type = EVP_PKEY_X25519;
+				} else if (nid == NID_X448) {
+					evp_type = EVP_PKEY_X448;
+				} else {
+					debug_print(" [WARN %s ] Unknown OID. Expected NID_X25519 (%d)"
+						" or NID_X448 (%d) got %d", o->id_str, NID_X25519, NID_X448, nid);
+					return -1;
 				}
-				evp_type = EVP_PKEY_X25519;
 				break;
 			default:
 				debug_print(" [WARN %s ] Unknown key type %lu", o->id_str, o->key_type);
@@ -499,15 +514,17 @@ int callback_public_keys(test_certs_t *objects,
 			debug_print(" [WARN %s ] Can not decode EC_POINT", o->id_str);
 			return -1;
 		}
-		if (os->length != 32) {
-			debug_print(" [WARN %s ] Invalid length of EC_POINT value", o->id_str);
+		if (((evp_type == EVP_PKEY_ED25519 || evp_type == EVP_PKEY_X25519) && os->length != 32) ||
+		    (evp_type == EVP_PKEY_ED448 && os->length != 56) ||
+		    (evp_type == EVP_PKEY_X448 && os->length != 57)) {
+			debug_print(" [WARN %s ] Invalid length of EC_POINT value, got %d", o->id_str, os->length);
 			return -1;
 		}
 		key = EVP_PKEY_new_raw_public_key(evp_type, NULL,
-			(const uint8_t *)os->data,
-			os->length);
+			(const uint8_t *)os->data, os->length);
 		if (key == NULL) {
-			debug_print(" [WARN %s ] Out of memory", o->id_str);
+			debug_print(" [WARN %s ] EVP_PKEY_new_raw_public_key failed", o->id_str);
+			ERR_print_errors_fp(stderr);
 			ASN1_STRING_free(os);
 			return -1;
 		}
@@ -545,7 +562,11 @@ int callback_public_keys(test_certs_t *objects,
 		} else { /* store the public key for future use */
 			o->type = evp_type;
 			o->key.pkey = key;
-			o->bits = 255;
+			if (evp_type == EVP_PKEY_ED25519 || evp_type == EVP_PKEY_X25519) {
+				o->bits = 255;
+			} else {
+				o->bits = 448;
+			}
 		}
 		ASN1_STRING_free(os);
 	} else {

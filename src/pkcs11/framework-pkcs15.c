@@ -2242,12 +2242,12 @@ pkcs15_create_private_key(struct sc_pkcs11_slot *slot, struct sc_profile *profil
 			gost = &args.key.u.gostr3410;
 			break;
 		case CKK_EC_EDWARDS:
-			args.key.algorithm = SC_ALGORITHM_EDDSA;
 			/* TODO */
+			args.key.algorithm = SC_ALGORITHM_EDDSA;
 			return CKR_ATTRIBUTE_VALUE_INVALID;
 		case CKK_EC_MONTGOMERY:
-			args.key.algorithm = SC_ALGORITHM_XEDDSA;
 			/* TODO */
+			args.key.algorithm = SC_ALGORITHM_XEDDSA;
 			return CKR_ATTRIBUTE_VALUE_INVALID;
 		case CKK_EC:
 			args.key.algorithm = SC_ALGORITHM_EC;
@@ -3217,8 +3217,7 @@ pkcs15_gen_keypair(struct sc_pkcs11_slot *slot, CK_MECHANISM_PTR pMechanism,
 	else if (keytype == CKK_EC_EDWARDS) {
 		/* TODO Validate EC_PARAMS contains curveName "edwards25519" or "edwards448" (from RFC 8032)
 		 * or id-Ed25519 or id-Ed448 (or equivalent OIDs in oId field) (from RFC 8410)
-		 * otherwise return CKR_CURVE_NOT_SUPPORTED
-		 */
+		 * otherwise return CKR_CURVE_NOT_SUPPORTED */
 		keygen_args.prkey_args.key.algorithm = SC_ALGORITHM_EDDSA;
 		pub_args.key.algorithm               = SC_ALGORITHM_EDDSA;
 		return CKR_CURVE_NOT_SUPPORTED;
@@ -3226,8 +3225,7 @@ pkcs15_gen_keypair(struct sc_pkcs11_slot *slot, CK_MECHANISM_PTR pMechanism,
 	else if (keytype == CKK_EC_MONTGOMERY) {
 		/* TODO Validate EC_PARAMS contains curveName "curve25519" or "curve448" (from RFC 7748)
 		 * or id-X25519 or id-X448 (or equivalent OIDs in oId field) (from RFC 8410)
-		 * otherwise return CKR_CURVE_NOT_SUPPORTED
-		 */
+		 * otherwise return CKR_CURVE_NOT_SUPPORTED */
 		keygen_args.prkey_args.key.algorithm = SC_ALGORITHM_XEDDSA;
 		pub_args.key.algorithm               = SC_ALGORITHM_XEDDSA;
 		return CKR_CURVE_NOT_SUPPORTED;
@@ -6077,6 +6075,8 @@ register_mechanisms(struct sc_pkcs11_card *p11card)
 	sc_algorithm_info_t *alg_info;
 	CK_MECHANISM_INFO mech_info;
 	CK_ULONG ec_min_key_size, ec_max_key_size,
+		ed_min_key_size, ed_max_key_size,
+		xed_min_key_size, xed_max_key_size,
 		aes_min_key_size, aes_max_key_size;
 	unsigned long ec_ext_flags;
 	sc_pkcs11_mechanism_type_t *mt;
@@ -6102,6 +6102,10 @@ register_mechanisms(struct sc_pkcs11_card *p11card)
 	mech_info.ulMaxKeySize = 0;
 	ec_min_key_size = ~0;
 	ec_max_key_size = 0;
+	ed_min_key_size = ~0;
+	ed_max_key_size = 0;
+	xed_min_key_size = ~0;
+	xed_max_key_size = 0;
 	aes_min_key_size = ~0;
 	aes_max_key_size = 0;
 
@@ -6132,9 +6136,17 @@ register_mechanisms(struct sc_pkcs11_card *p11card)
 				break;
 			case SC_ALGORITHM_EDDSA:
 				eddsa_flags |= alg_info->flags;
+				if (alg_info->key_length < ed_min_key_size)
+					ed_min_key_size = alg_info->key_length;
+				if (alg_info->key_length > ed_max_key_size)
+					ed_max_key_size = alg_info->key_length;
 				break;
 			case SC_ALGORITHM_XEDDSA:
 				xeddsa_flags |= alg_info->flags;
+				if (alg_info->key_length < xed_min_key_size)
+					xed_min_key_size = alg_info->key_length;
+				if (alg_info->key_length > xed_max_key_size)
+					xed_max_key_size = alg_info->key_length;
 				break;
 			case SC_ALGORITHM_GOSTR3410:
 				gostr_flags |= alg_info->flags;
@@ -6162,13 +6174,13 @@ register_mechanisms(struct sc_pkcs11_card *p11card)
 	}
 
 	if (eddsa_flags & SC_ALGORITHM_EDDSA_RAW) {
-		rc = register_eddsa_mechanisms(p11card, eddsa_flags, 255, 255);
+		rc = register_eddsa_mechanisms(p11card, eddsa_flags, ed_min_key_size, ed_max_key_size);
 		if (rc != CKR_OK)
 			return rc;
 	}
 
 	if (xeddsa_flags & (SC_ALGORITHM_XEDDSA_RAW | SC_ALGORITHM_ECDH_CDH_RAW)) {
-		rc = register_xeddsa_mechanisms(p11card, xeddsa_flags, 255, 255);
+		rc = register_xeddsa_mechanisms(p11card, xeddsa_flags, xed_min_key_size, xed_max_key_size);
 		if (rc != CKR_OK)
 			return rc;
 	}
