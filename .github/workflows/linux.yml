@@ -82,6 +82,32 @@ jobs:
       - run: .github/setup-linux.sh isoapplet
       - run: .github/test-isoapplet.sh
 
+  test-gidsapplet:
+    runs-on: ubuntu-18.04
+    needs: [build-ubuntu-18]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v2
+        id: cache-build
+        with:
+          path: ./*
+          key: ${{ runner.os }}-18-${{ github.sha }}
+      - run: .github/setup-linux.sh gidsapplet
+      - run: .github/test-gidsapplet.sh
+
+  test-openpgp:
+    runs-on: ubuntu-18.04
+    needs: [build-ubuntu-18]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v2
+        id: cache-build
+        with:
+          path: ./*
+          key: ${{ runner.os }}-18-${{ github.sha }}
+      - run: .github/setup-linux.sh openpgp
+      - run: .github/test-openpgp.sh
+
   build-clang-tidy:
     runs-on: ubuntu-latest
     needs: [build]
