@@ -8,8 +8,11 @@ elif [ "$1" == "cac" ]; then
 	DEPS="$DEPS libglib2.0-dev libnss3-dev gnutls-bin libusb-dev libudev-dev flex libnss3-tools"
 elif [ "$1" == "oseid" ]; then
 	DEPS="$DEPS socat gawk xxd"
-elif [ "$1" == "piv" ]; then
-	DEPS="$DEPS ant cmake openjdk-8-jdk"
+elif [ "$1" == "piv" -o "$1" == "isoapplet" ]; then
+	if [ "$1" == "piv" ]; then
+		DEPS="$DEPS cmake"
+	fi
+	DEPS="$DEPS ant openjdk-8-jdk"
 elif [ "$1" == "mingw" -o "$1" == "mingw32" ]; then
 	sudo dpkg --add-architecture i386
 	if [ "$1" == "mingw" ]; then
@@ -24,7 +27,7 @@ export DEBIAN_FRONTEND=noninteractive
 sudo apt-get update
 sudo apt-get install -y build-essential $DEPS
 
-if [ "$1" == "piv" ]; then
+if [ "$1" == "piv" -o "$1" == "isoapplet" ]; then
 	sudo update-java-alternatives -s java-1.8.0-openjdk-amd64
 	sudo update-alternatives --get-selections | grep ^java
 	export PATH="/usr/lib/jvm/java-8-openjdk-amd64/bin/:$PATH"

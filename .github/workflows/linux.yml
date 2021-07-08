@@ -69,6 +69,19 @@ jobs:
       - run: .github/setup-linux.sh piv
       - run: .github/test-piv.sh
 
+  test-isoapplet:
+    runs-on: ubuntu-18.04
+    needs: [build-ubuntu-18]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v2
+        id: cache-build
+        with:
+          path: ./*
+          key: ${{ runner.os }}-18-${{ github.sha }}
+      - run: .github/setup-linux.sh isoapplet
+      - run: .github/test-isoapplet.sh
+
   build-clang-tidy:
     runs-on: ubuntu-latest
     needs: [build]
@@ -110,7 +123,7 @@ jobs:
 
   push-artifacts:
     runs-on: ubuntu-latest
-    needs: [test-cac, test-oseid, test-piv, build-mingw, build-mingw32]
+    needs: [test-cac, test-oseid, test-piv, test-isoapplet, build-mingw, build-mingw32]
     steps:
       - uses: actions/checkout@v2
       - uses: actions/cache@v2
