@@ -10,10 +10,13 @@ elif [ "$1" == "oseid" ]; then
 	DEPS="$DEPS socat gawk xxd"
 elif [ "$1" == "piv" ]; then
 	DEPS="$DEPS ant cmake openjdk-8-jdk"
-elif [ "$1" == "mingw" ]; then
-	DEPS="$DEPS wine wine32 binutils-mingw-w64-x86-64 gcc-mingw-w64-x86-64 mingw-w64"
-elif [ "$1" == "mingw32" ]; then
-	DEPS="$DEPS wine wine32 binutils-mingw-w64-i686 gcc-mingw-w64-i686"
+elif [ "$1" == "mingw" -o "$1" == "mingw32" ]; then
+	dpkg --add-architecture i386
+	if [ "$1" == "mingw" ]; then
+		DEPS="$DEPS wine wine32 binutils-mingw-w64-x86-64 gcc-mingw-w64-x86-64 mingw-w64"
+	elif [ "$1" == "mingw32" ]; then
+		DEPS="$DEPS wine wine32 binutils-mingw-w64-i686 gcc-mingw-w64-i686"
+	fi
 fi
 
 # make sure we do not get prompts
