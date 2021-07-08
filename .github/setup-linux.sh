@@ -6,12 +6,22 @@ if [ "$1" == "cac" ]; then
 elif [ "$1" == "oseid" ]; then
 	DEPS="$DEPS socat gawk xxd"
 elif [ "$1" == "piv"]; then
-	DEPS="$DEPS ant cmake"
+	DEPS="$DEPS ant cmake openjdk-8-jdk"
 elif [ "$1" == "mingw" ]; then
-	DEPS="$DEPS wine binutils-mingw-w64-i686 binutils-mingw-w64-x86-64 gcc-mingw-w64-i686 gcc-mingw-w64-x86-64 mingw-w64"
+	DEPS="$DEPS wine binutils-mingw-w64-x86-64 gcc-mingw-w64-x86-64 mingw-w64"
+elif [ "$1" == "mingw32" ]; then
+	DEPS="$DEPS wine binutils-mingw-w64-i686 gcc-mingw-w64-i686"
 fi
 
 # make sure we do not get prompts
 export DEBIAN_FRONTEND=noninteractive
 sudo apt-get update
 sudo apt-get install -y build-essential $DEPS
+
+if [ "$1" == "piv" ]; then
+	sudo update-java-alternatives -s java-1.8.0-openjdk-amd64;
+	sudo update-alternatives --get-selections | grep ^java;
+	export PATH="/usr/lib/jvm/java-8-openjdk-amd64/bin/:$PATH";
+	export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64/;
+	env | grep -i openjdk;
+fi
