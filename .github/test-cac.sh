@@ -5,7 +5,7 @@ sudo make install
 export LD_LIBRARY_PATH=/usr/local/lib
 
 # VSmartcard
-./setup-vsmartcard.sh
+./.github/setup-vsmartcard.sh
 
 # libcacard
 if [ ! -d "libcacard" ]; then
