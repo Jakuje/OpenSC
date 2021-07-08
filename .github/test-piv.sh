@@ -5,7 +5,7 @@ sudo make install
 export LD_LIBRARY_PATH=/usr/local/lib
 
 # setup java stuff
-./.github/setup-java.sh
+. .github/setup-java.sh
 
 # The PIV Applet
 git clone --recursive https://github.com/arekinath/PivApplet.git

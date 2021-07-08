@@ -5,7 +5,7 @@ sudo make install
 export LD_LIBRARY_PATH=/usr/local/lib
 
 # setup java stuff
-./.github/setup-java.sh
+. .github/setup-java.sh
 
 # GidsApplet
 git clone https://github.com/vletoux/GidsApplet.git;
@@ -34,4 +34,3 @@ kill -9 $PID
 
 # cleanup
 sudo kill -9 $PCSCD_PID
-

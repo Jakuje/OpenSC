@@ -149,7 +149,7 @@ jobs:
 
   push-artifacts:
     runs-on: ubuntu-latest
-    needs: [test-cac, test-oseid, test-piv, test-isoapplet, build-mingw, build-mingw32]
+    needs: [build-mingw, build-mingw32]
     steps:
       - uses: actions/checkout@v2
       - uses: actions/cache@v2

@@ -1,5 +1,12 @@
 #!/bin/bash -e
 
+# Select the right java
+sudo update-java-alternatives -s java-1.8.0-openjdk-amd64
+sudo update-alternatives --get-selections | grep ^java
+export PATH="/usr/lib/jvm/java-8-openjdk-amd64/bin/:$PATH"
+export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64/
+env | grep -i openjdk
+
 # VSmartcard
 ./.github/setup-vsmartcard.sh
 

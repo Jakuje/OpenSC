@@ -5,7 +5,7 @@ sudo make install
 export LD_LIBRARY_PATH=/usr/local/lib
 
 # setup java stuff
-./.github/setup-java.sh
+. .github/setup-java.sh
 
 # The OpenPGP applet
 git clone --recursive https://github.com/Yubico/ykneo-openpgp.git;
@@ -38,4 +38,3 @@ kill -9 $PID
 
 # cleanup
 sudo kill -9 $PCSCD_PID
-

@@ -27,14 +27,6 @@ export DEBIAN_FRONTEND=noninteractive
 sudo apt-get update
 sudo apt-get install -y build-essential $DEPS
 
-if [ "$1" == "piv" -o "$1" == "isoapplet" -o "$1" == "gidsapplet" -o "$1" == "openpgp" ]; then
-	sudo update-java-alternatives -s java-1.8.0-openjdk-amd64
-	sudo update-alternatives --get-selections | grep ^java
-	export PATH="/usr/lib/jvm/java-8-openjdk-amd64/bin/:$PATH"
-	export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64/
-	env | grep -i openjdk
-fi
-
 if [ "$1" == "mingw" -o "$1" == "mingw32" ]; then
 	if [ ! -f "$(winepath 'C:/Program Files (x86)/Inno Setup 5/ISCC.exe')" ]; then
 		/sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -ac -screen 0 1280x1024x16
@@ -42,6 +34,7 @@ if [ "$1" == "mingw" -o "$1" == "mingw32" ]; then
 		[ -d isetup ] || mkdir isetup
 		pushd isetup
 		[ -f isetup-5.5.6.exe ] || wget http://files.jrsoftware.org/is/5/isetup-5.5.6.exe
+		sleep 5 # make sure the X server is ready ?
 		wine isetup-5.5.6.exe /SILENT /VERYSILENT /SP- /SUPPRESSMSGBOXES /NORESTART
 		popd
 	fi
