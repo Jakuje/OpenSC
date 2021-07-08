@@ -48,5 +48,5 @@ fi
 sudo make install
 
 if [ "$1" == "mingw" -o "$1" == "mingw32" ]; then
-	wine "C:/Program Files (x86)/Inno Setup 5/ISCC.exe" win32/OpenSC.iss;
+	wine "C:/Program Files (x86)/Inno Setup 5/ISCC.exe" win32/OpenSC.iss
 fi

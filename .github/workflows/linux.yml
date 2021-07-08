@@ -49,7 +49,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: .github/setup-linux.sh mingw32
-      - run: .github/build.sh mingw
+      - run: .github/build.sh mingw32
       - uses: actions/cache@v2
         id: cache-build
         with:
