@@ -1,7 +1,10 @@
 #!/bin/bash -e
 
-DEPS="docbook-xsl libpcsclite-dev xsltproc gengetopt libcmocka-dev help2man pcscd check clang-tidy softhsm2 pcsc-tools libtool make autoconf autoconf-archive automake libssl-dev zlib1g-dev pkg-config libreadline-dev openssl git"
-if [ "$1" == "cac" ]; then
+DEPS="docbook-xsl libpcsclite-dev xsltproc gengetopt libcmocka-dev help2man pcscd check softhsm2 pcsc-tools libtool make autoconf autoconf-archive automake libssl-dev zlib1g-dev pkg-config libreadline-dev openssl git"
+
+if [ "$1" == "clang-tidy" ]; then
+	DEPS="$DEPS clang-tidy"
+elif [ "$1" == "cac" ]; then
 	DEPS="$DEPS libglib2.0-dev libnss3-dev gnutls-bin libusb-dev libudev-dev flex libnss3-tools"
 elif [ "$1" == "oseid" ]; then
 	DEPS="$DEPS socat gawk xxd"
