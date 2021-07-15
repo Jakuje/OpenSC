@@ -2656,7 +2656,7 @@ static int piv_generate_key(sc_card_t *card,
 
 		/* expected tag is 0x7f49,returned as cla_out == 0x60 and tag_out = 0x1F49 */
 		r = sc_asn1_read_tag(&cp, in_len, &cla_out, &tag_out, &in_len);
-		if (cp == NULL || in_len == 0 || cla_out != 0x60 || tag_out != 0x1f49) {
+		if (r < 0 || cp == NULL || in_len == 0 || cla_out != 0x60 || tag_out != 0x1f49) {
 			r = SC_ERROR_ASN1_OBJECT_NOT_FOUND;
 		}
 		if (r != SC_SUCCESS) {
@@ -4544,7 +4544,6 @@ piv_compute_signature(sc_card_t *card, const u8 * data, size_t datalen,
 	u8 rbuf[128]; /* For EC conversions  384 will fit */
 
 	SC_FUNC_CALLED(card->ctx, SC_LOG_DEBUG_VERBOSE);
-
 	/* The PIV returns a DER SEQUENCE{INTEGER, INTEGER}
 	 * Which may have leading 00 to force a positive integer
 	 * But PKCS11 just wants 2* field_length in bytes
