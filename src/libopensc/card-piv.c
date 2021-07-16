@@ -441,7 +441,7 @@ struct piv_aid {
  * 800-73-2 Part 1 implies  version is  "02 00"
  * i.e. "A0 00 00 03 08 00 00 01 00 02 00".
  * but we don't need the version number. But could get it from the PIX.
- * Dicovery object was added.
+ * Discovery object was added.
  *
  * 800-73-3 Part 1 now refers to "01 00" i.e. going back to 800-73-1.
  * The main differences between 73-2, and 73-3 are the addition of the
@@ -1405,7 +1405,7 @@ static int piv_free_sm_apdu(sc_card_t *card, sc_apdu_t *plain, sc_apdu_t **sm_ap
 			r  = piv_decode_apdu(card, plain, *sm_apdu);
 			goto err;
 		}
-		sc_log(card->ctx,"SM responce sw1:0x%2.2x sw2:0x%2.2x", plain->sw1, plain->sw2);
+		sc_log(card->ctx,"SM response sw1:0x%2.2x sw2:0x%2.2x", plain->sw1, plain->sw2);
 		if (plain->sw1 == 0x69 && plain->sw2 == 0x88) {
 			/* BUT plain->sw1 and sw2 are not passed back as expected */
 			r = SC_ERROR_SM_INVALID_CHECKSUM; /* will use this one one for now */
@@ -1761,9 +1761,9 @@ err:
 
 #ifdef ENABLE_PIV_SM
 /* convert q as 04||x||y used in standard point formats to expanded leading
- * zeros and concatenated X||Y as specified in SP80056A Apendix C.2
+ * zeros and concatenated X||Y as specified in SP80056A Appendix C.2
  * Field-Element-to-Byte-String Conversion which.
- * OpenSSL has already converted X and Y to big endian and skiped leading
+ * OpenSSL has already converted X and Y to big endian and skipped leading
  * zero bytes.
  */
 static int Q2OS(int fsize, u8 *Q, size_t Qlen, u8 * OS, size_t *OSlen)
@@ -1774,7 +1774,7 @@ static int Q2OS(int fsize, u8 *Q, size_t Qlen, u8 * OS, size_t *OSlen)
 	i = (Qlen - 1)/2;
 	memset(OS, 0, f * 2);
 	/* Check this if x and y have leading zero bytes,
-	 * In UNCOMPRESED FORMAT, x and Y must be same length, to tell when 
+	 * In UNCOMPRESSED FORMAT, x and Y must be same length, to tell when 
 	 * one ends and the other starts */
 	memcpy(OS + f - i, Q + 1, i);
 	memcpy(OS + 2 * f - i, Q + f + 1, i);
@@ -1938,7 +1938,7 @@ static int piv_sm_verify_certs(struct sc_card *card)
 				priv->sm_in_cvc.body, priv->sm_in_cvc.bodylen,
 				priv->sm_in_cvc.signature,priv->sm_in_cvc.signaturelen);
 		if (r < 0) {
-			sc_log(card->ctx,"sm_in_cvc signatue invalid");
+			sc_log(card->ctx,"sm_in_cvc signature invalid");
 			r =  SC_ERROR_SM_AUTHENTICATION_FAILED;
 			goto err;
 		}
@@ -1984,7 +1984,7 @@ static int piv_sm_verify_certs(struct sc_card *card)
 				priv->sm_cvc.signature,priv->sm_cvc.signaturelen);
 	}
 	if (r < 0) {
-		sc_log(card->ctx,"sm_cvc signatue invalid");
+		sc_log(card->ctx,"sm_cvc signature invalid");
 		r =  SC_ERROR_SM_AUTHENTICATION_FAILED;
 		goto err;
 	}
@@ -2024,7 +2024,7 @@ err:
  * NIST SP800-73-4  4.1 The key Establishment Protocol
  * Variable names and Steps  are based on Client Application (h)
  * and PIV Card Application (icc)
- * Capital leters used for vaiable, and lower case for subscript names
+ * Capital leters used for variable, and lower case for subscript names
  */
 static int piv_sm_open(struct sc_card *card)
 {
@@ -2226,15 +2226,15 @@ static int piv_sm_open(struct sc_card *card)
 	p = rbuf;
 	
 	body = sc_asn1_find_tag(card->ctx, rbuf, rbuflen, 0x7C, &bodylen);
-	if (body == NULL || bodylen < 20) {
-		sc_log(card->ctx, "SM responce data to short");
+	if (body == NULL || bodylen < 20 || rbuf[0] != 0x7C) {
+		sc_log(card->ctx, "SM response data to short");
 		r = SC_ERROR_SM_NO_SESSION_KEYS;
 		goto err;
 	}
 
 	payload = sc_asn1_find_tag(card->ctx, body, bodylen, 0x82, &payloadlen);
-	if (payload == NULL || payloadlen < 1 + cs->Nicclen + cs->AuthCryptogramlen) {
-		sc_log(card->ctx, "SM responce data to short");
+	if (payload == NULL || payloadlen < 1 + cs->Nicclen + cs->AuthCryptogramlen || *body != 0x82) {
+		sc_log(card->ctx, "SM response data to short");
 		r = SC_ERROR_SM_NO_SESSION_KEYS;
 		goto err;
 	}
@@ -2293,7 +2293,9 @@ static int piv_sm_open(struct sc_card *card)
 		const u8* tmpder;
 		size_t tmpderlen;
 
-		if ((tag = sc_asn1_find_tag(card->ctx,cvcder,cvclen, 0x7F21, &taglen))  == NULL){
+		if ((tag = sc_asn1_find_tag(card->ctx, cvcder, cvclen, 0x7F21, &taglen)) == NULL
+				|| *cvcder != 0x7F || *(cvcder + 1) != 0x21) {
+
 			r = SC_ERROR_INTERNAL;
 			goto err;
 		}
@@ -2376,7 +2378,7 @@ static int piv_sm_open(struct sc_card *card)
 	EVP_PKEY_free(eph_pkey); /* OpenSSL  BN_clear_free calls OPENSSL_cleanse */
 	eph_pkey = NULL;
 
-	/* Step H10 Creat AES session Keys */
+	/* Step H10 Create AES session Keys */
 	/* kdf in is 4byte counter || Z || otherinfo  800-56A 5.8.1 */
 	
 	kdf_inlen = 4 + Zlen + cs->otherinfolen;
@@ -2747,7 +2749,7 @@ static int piv_find_aid(sc_card_t * card)
 	size_t pixlen;
 	const u8 *actag;  /* Cipher Suite */
 	size_t actaglen;
-	const u8 *csai; /* Cipher Suite Algorithm Identifer */
+	const u8 *csai; /* Cipher Suite Algorithm Identifier */
 	size_t csailen;
 	size_t resplen = sizeof(rbuf);
 #ifdef ENABLE_PIV_SM
@@ -2770,7 +2772,7 @@ static int piv_find_aid(sc_card_t * card)
 		tag = sc_asn1_find_tag(card->ctx, rbuf, resplen, 0x61, &taglen);
 		if (tag != NULL) {
 			priv->init_flags |= PIV_INIT_AID_PARSED;
-			/* look for 800-73-4 0xAC for Cipher Suite Algorithm Identifer Table 14 */
+			/* look for 800-73-4 0xAC for Cipher Suite Algorithm Identifier Table 14 */
 			/* There maybe more then one 0xAC tag, loop to find all */
 
 			nextac = tag;
@@ -3745,7 +3747,7 @@ static int piv_general_mutual_authenticate(sc_card_t *card,
 	/* Get the witness data indicated by the TAG 0x80 */
 	witness_data = sc_asn1_find_tag(card->ctx, body,
 		body_len, 0x80, &witness_len);
-	if (!witness_len) {
+	if (!witness_len || body[0] != 0x80) {
 		sc_debug(card->ctx, SC_LOG_DEBUG_VERBOSE, "Invalid Challenge Data none found in TLV\n");
 		r =  SC_ERROR_INVALID_DATA;
 		goto err;
@@ -5368,7 +5370,7 @@ static int piv_match_card_continued(sc_card_t *card)
 	 * Discovery Object introduced in 800-73-3 so will return OK if found and PIV applet active.
 	 * Will fail with SC_ERROR_FILE_NOT_FOUND if 800-73-3 and no Discovery object.
 	 * But some other card could also return SC_ERROR_FILE_NOT_FOUND.
-	 * Will fail for other reasons if wrong applet is selected or bad PIV implimentation. 
+	 * Will fail for other reasons if wrong applet is selected or bad PIV implementation. 
 	 */
 
 	/* first test if PIV is active applet without using AID If fails use the AID */
@@ -6155,12 +6157,12 @@ static int piv_logout(sc_card_t *card)
  * this is very similar to what the piv_match routine does,
  */
 
-/* TODO card.c also calles piv_sm_open before this if a reset was done, but
+/* TODO card.c also calls piv_sm_open before this if a reset was done, but
  * does not say if a reset was done or not. May need to ignore the call
- * the piv_sm_open in this case, but how? may need a opens is active flag,
+ * the piv_sm_open in this case, but how? may need a open is active flag,
  * in case it is the APDU done from open caused  triggered the case.
  */
- /* TODO may be called recursivly to handle reset. 
+ /* TODO may be called recursively to handle reset. 
   * need we are active, and if called again with was_reset save this 
   * and return to let first call handle the reset
   */
