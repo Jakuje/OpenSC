@@ -1,12 +1,11 @@
-name: test-clang-format
+name: Check Code Style
 
 on:
-  push:
-    branches:
-    - ci
   pull_request:
-    branches:
-      - master
+    paths:
+      - '**.c'
+      - '**.h'
+      - .github/workflows/formatter.yml
 
 jobs:
   build:
