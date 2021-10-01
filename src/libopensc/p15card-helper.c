@@ -29,6 +29,7 @@
 #include <openssl/bio.h>
 #include <openssl/rsa.h>
 #include <openssl/x509.h>
+#include <openssl/evp.h>
 
 #include "internal.h"
 #include "p15card-helper.h"
@@ -143,10 +144,10 @@ CERT_HANDLE_FUNCTION(default_cert_handle) {
 	int r;
 	X509 *cert_data = NULL;
 	EVP_PKEY *pkey = NULL;
-	const RSA * rsa = NULL;
-	int certtype = 0;
 	int modulus_len = 0;
 	const prdata* key = get_prkey_by_cert(items, cert);
+	int id = 0;
+
 	if(!key) {
 		sc_log(p15card->card->ctx,  "Error: No key for this certificate");
 		return SC_ERROR_INTERNAL;
@@ -165,38 +166,26 @@ CERT_HANDLE_FUNCTION(default_cert_handle) {
 		goto err;
 	}
 
-	certtype = X509_certificate_type(cert_data, pkey);
-	if(! (EVP_PK_RSA & certtype)) {
+	id = EVP_PKEY_id(pkey);
+	if(id != EVP_PKEY_RSA && id != EVP_PKEY_RSA_PSS) {
 		sc_log(p15card->card->ctx,  "Error: certificate is not for an RSA key");
 		r = SC_ERROR_INTERNAL;
 		goto err;
 	}
-	rsa = EVP_PKEY_get0_RSA(pkey);
-	if( rsa == NULL) {
-		sc_log(p15card->card->ctx,  "Error: no modulus associated with the certificate");
-		r = SC_ERROR_INTERNAL;
-		goto err;
-	}
 	
-	modulus_len =  RSA_bits(rsa);
+	modulus_len = EVP_PKEY_bits(pkey);
 
 	/* printf("Key Size: %d bits\n\n", modulus_len); */
 	/* cached_cert->modulusLength = modulus_len; */
 	
 	if(key->label) {
 		int usage = 0;
-		if (certtype & EVP_PKT_SIGN) {
-			usage |= SC_PKCS15_PRKEY_USAGE_SIGN;
-			usage |= SC_PKCS15_PRKEY_USAGE_NONREPUDIATION;
-		}
+		usage |= SC_PKCS15_PRKEY_USAGE_SIGN;
+		usage |= SC_PKCS15_PRKEY_USAGE_NONREPUDIATION;
 		
-		if (certtype & EVP_PKT_ENC) {
+		if (id == EVP_PKEY_RSA) {
 			usage |= SC_PKCS15_PRKEY_USAGE_ENCRYPT;
 			usage |= SC_PKCS15_PRKEY_USAGE_DECRYPT;
-		}
-		if (certtype & EVP_PKT_EXCH) {
-			usage |= SC_PKCS15_PRKEY_USAGE_WRAP;
-			usage |= SC_PKCS15_PRKEY_USAGE_UNWRAP;
 		}
 		r = add_private_key(p15card, key, usage, modulus_len);
 		if (r < 0)
