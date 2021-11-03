@@ -2,7 +2,7 @@
 
 set -ex -o xtrace
 
-export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig;
+export PKG_CONFIG_PATH=/usr/local/lib64/pkgconfig;
 
 if [ "$GITHUB_EVENT_NAME" == "pull_request" ]; then
 	PR_NUMBER=$(echo $GITHUB_REF | awk 'BEGIN { FS = "/" } ; { print $3 }')
