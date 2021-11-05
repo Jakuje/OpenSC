@@ -34,6 +34,7 @@
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L
 #include <openssl/core_names.h>
 #include <openssl/param_build.h>
+#include <openssl/provider.h>
 #endif
 #include "libopensc/sc-ossl-compat.h"
 #ifndef OPENSSL_NO_EC
@@ -273,7 +274,11 @@ sc_pkcs11_register_openssl_mechanisms(struct sc_pkcs11_card *p11card)
 	sc_pkcs11_register_mechanism(p11card, dup_mem(&openssl_sha384_mech, sizeof openssl_sha384_mech));
 	openssl_sha512_mech.mech_data = EVP_sha512();
 	sc_pkcs11_register_mechanism(p11card, dup_mem(&openssl_sha512_mech, sizeof openssl_sha512_mech));
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
 	if (!FIPS_mode()) {
+#else
+	if (!OSSL_PROVIDER_available(NULL, "fips")) {
+#endif
 		openssl_md5_mech.mech_data = EVP_md5();
 		sc_pkcs11_register_mechanism(p11card, dup_mem(&openssl_md5_mech, sizeof openssl_md5_mech));
 		openssl_ripemd160_mech.mech_data = EVP_ripemd160();
