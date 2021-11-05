@@ -20,10 +20,10 @@ else
 	fi
 fi
 
-./configure  --disable-dependency-tracking --disable-strict
+./configure  --disable-dependency-tracking --disable-strict CFLAGS="-Wall -Wextra -Wno-unused-parameter -Wstrict-aliasing=2 -g -O2"
 make -j 2 V=1
 
-make distcheck
+make distcheck DISTCHECK_CONFIGURE_FLAGS="--disable-strict CFLAGS=\"-Wall -Wextra -Wno-unused-parameter -Wstrict-aliasing=2 -g -O2\""
 make dist
 
 sudo make install
