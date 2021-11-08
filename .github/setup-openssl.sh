@@ -8,7 +8,7 @@ if [ ! -d "openssl" ]; then
 	git clone https://github.com/openssl/openssl
 fi
 pushd openssl
-git checkout openssl-3.0.0-beta2
+git checkout openssl-3.0
 ./Configure --prefix=/usr/local linux-x86_64
 make -j $(nproc)
 sudo make install
