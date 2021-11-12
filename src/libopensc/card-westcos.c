@@ -1108,7 +1108,7 @@ static int westcos_sign_decipher(int mode, sc_card_t *card,
 				 const u8 * data, size_t data_len, u8 * out,
 				 size_t outlen)
 {
-	int r;
+	int r = SC_SUCCESS;
 	sc_file_t *keyfile = NULL;
 #ifdef ENABLE_OPENSSL
 	int idx = 0;
@@ -1211,7 +1211,7 @@ static int westcos_sign_decipher(int mode, sc_card_t *card,
 	if (mode) {		/* decipher */
 		if (EVP_PKEY_decrypt_init(ctx) != 1 ||
 			EVP_PKEY_CTX_set_rsa_padding(ctx, pad) != 1 ||
-			(r = EVP_PKEY_decrypt(ctx, out, NULL, data, data_len)) != 1) {
+			EVP_PKEY_decrypt(ctx, out, NULL, data, data_len) != 1) {
 
 #ifdef DEBUG_SSL
 			print_openssl_error();
@@ -1226,7 +1226,7 @@ static int westcos_sign_decipher(int mode, sc_card_t *card,
 	else {			/* sign */
 		if (EVP_PKEY_encrypt_init(ctx) != 1 ||
 			EVP_PKEY_CTX_set_rsa_padding(ctx, pad) != 1 ||
-			(r = EVP_PKEY_encrypt(ctx, out, NULL, data, data_len)) != 1) {
+			EVP_PKEY_encrypt(ctx, out, NULL, data, data_len) != 1) {
 
 #ifdef DEBUG_SSL
 			print_openssl_error();
