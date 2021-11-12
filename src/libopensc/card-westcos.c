@@ -1207,7 +1207,6 @@ static int westcos_sign_decipher(int mode, sc_card_t *card,
 		goto out;
 	}
 
-#if 1
 	if (mode) {		/* decipher */
 		if (EVP_PKEY_decrypt_init(ctx) != 1 ||
 			EVP_PKEY_CTX_set_rsa_padding(ctx, pad) != 1 ||
@@ -1238,16 +1237,6 @@ static int westcos_sign_decipher(int mode, sc_card_t *card,
 		}
 	}
 
-#else
-	if (RSA_sign(nid, data, data_len, out, &outlen, rsa) != 1) {
-		sc_log(card->ctx, 
-			"RSA_sign error %d \n", ERR_get_error());
-		r = SC_ERROR_UNKNOWN;
-		goto out;
-	}
-	r = outlen;
-
-#endif
 out:
 	if (mem)
 		BIO_free(mem);
