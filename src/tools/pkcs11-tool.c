@@ -5392,11 +5392,7 @@ static int test_digest(CK_SESSION_HANDLE session)
 			data[10 * i + j] = (unsigned char) (0x30 + j);
 
 #ifdef ENABLE_OPENSSL
-#if OPENSSL_VERSION_NUMBER < 0x30000000L
 	i = (FIPS_mode() ? 2 : 0);
-#else
-	i = (OSSL_PROVIDER_available(NULL, "fips") ? 2 : 0);
-#endif
 #else
 	i = 0;
 #endif
