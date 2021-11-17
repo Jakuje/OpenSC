@@ -1123,6 +1123,11 @@ static int piv_get_sm_apdu(sc_card_t *card, sc_apdu_t *plain, sc_apdu_t **sm_apd
 	}
 
 	r = piv_encode_apdu(card, plain, *sm_apdu);
+	if (r < 0 && *sm_apdu) {
+		free((*sm_apdu)->resp);
+		free(*sm_apdu);
+		*sm_apdu = NULL;
+	}
 
 	LOG_FUNC_RETURN(card->ctx, r);
 }
@@ -1762,23 +1767,27 @@ err:
 #ifdef ENABLE_PIV_SM
 /* convert q as 04||x||y used in standard point formats to expanded leading
  * zeros and concatenated X||Y as specified in SP80056A Appendix C.2
- * Field-Element-to-Byte-String Conversion which.
+ * Field-Element-to-Byte-String Conversion which
  * OpenSSL has already converted X and Y to big endian and skipped leading
  * zero bytes.
  */
 static int Q2OS(int fsize, u8 *Q, size_t Qlen, u8 * OS, size_t *OSlen)
 {
-	int i;
+	size_t i;
 	size_t f = fsize/8;
-	
+
 	i = (Qlen - 1)/2;
+
+	if (!OS || *OSlen < f * 2 || !Q || i > f)
+		return SC_ERROR_INTERNAL;
+
 	memset(OS, 0, f * 2);
 	/* Check this if x and y have leading zero bytes,
 	 * In UNCOMPRESSED FORMAT, x and Y must be same length, to tell when 
 	 * one ends and the other starts */
 	memcpy(OS + f - i, Q + 1, i);
 	memcpy(OS + 2 * f - i, Q + f + 1, i);
-	*OSlen = 2 * f;
+	*OSlen = f * 2;
 	return 0;
 }
 
@@ -1807,11 +1816,16 @@ static int piv_send_vci_pairing_code(struct sc_card *card, u8 *paring_code)
 	plain.resplen = plain.le = 0;
 
 	memset(&sm_apdu,0,sizeof(sm_apdu));
+	/* build sm_apdu and set alloc sm_apdu.resp */
 	r = piv_encode_apdu(card, &plain, &sm_apdu);
+	if (r < 0)
+		free(sm_apdu.resp);
 	LOG_TEST_RET(card->ctx, r, "piv_encode_apdu failed");
 
 	sm_apdu.flags += SC_APDU_FLAGS_NO_SM; /* run as is */
 	r = sc_transmit_apdu(card, &sm_apdu);
+	if (r < 0)
+		free(sm_apdu.resp);
 	LOG_TEST_RET(card->ctx, r, "transmit failed");
 
 	r = piv_decode_apdu(card, &plain, &sm_apdu);
@@ -2081,7 +2095,7 @@ static int piv_sm_open(struct sc_card *card)
 
 	const u8 *body, *payload;
 	size_t bodylen, payloadlen;
-	u8 Nicc[24]; /* nounce */
+	u8 Nicc[24]; /* nonce */
 	u8 AuthCryptogram[16];
 
 	u8 *cvcder = NULL;
@@ -2170,6 +2184,7 @@ static int piv_sm_open(struct sc_card *card)
 #endif
 
 	/* For later use, get  Qeh without 04 and full size  X || Y */
+	Qeh_OSlen = sizeof(Qeh_OS);
 	if (Q2OS(cs->field_length, Qeh, Qehlen, Qeh_OS, &Qeh_OSlen)) {
 		sc_log(card->ctx,"Q2OS for Qeh failed");
 		r = SC_ERROR_INTERNAL;
@@ -2352,6 +2367,7 @@ static int piv_sm_open(struct sc_card *card)
 #endif
 	
 	/* Qsicc without 04 and expanded x||y */
+	Qsicc_OSlen = sizeof(Qsicc_OS);
 	if (Q2OS(cs->field_length, priv->sm_cvc.publicPoint, priv->sm_cvc.publicPointlen, Qsicc_OS, &Qsicc_OSlen)) {
 		sc_log(card->ctx,"Q2OS for Qsicc failed");
 		r = SC_ERROR_INTERNAL;
