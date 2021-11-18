@@ -382,6 +382,8 @@ static const struct sc_card_error piv_sm_errors[] = {
 #define PIV_INIT_IN_READER_LOCK_OBTAINED	0x00000010u
 #define PIV_INIT_CONTACTLESS			0x00000020u
 
+#define PIV_PAIRING_CODE_LEN	 8
+
 typedef struct piv_private_data {
 	struct sc_lv_data aid_der; /* previous aid response to compare */
 	int enumtag;
@@ -420,7 +422,7 @@ typedef struct piv_private_data {
 	piv_cvc_t sm_cvc;  /* 800-73-4:  SM CVC Table 15 */
 	piv_cvc_t sm_in_cvc; /* Intermediate CVC Table 16 */
 	unsigned long  sm_flags;
-	unsigned char pairing_code[8]; /* 8 decimal digits */
+	unsigned char pairing_code[PIV_PAIRING_CODE_LEN]; /* 8 ASCII digits */
 	piv_sm_session_t sm_session;
 #endif /* ENABLE_PIV_SM */
 } piv_private_data_t;
@@ -1561,6 +1563,25 @@ int piv_decode_cvc(sc_card_t * card, u8 **buf, size_t *buflen,
 }
 #endif /* ENABLE_PIV_SM */
 
+#ifdef ENABLE_PIV_SM
+int piv_parse_pairing_code(sc_card_t *card, const char *option)
+{
+	size_t i;
+
+	if (strlen(option) != PIV_PAIRING_CODE_LEN) {
+		sc_log(card->ctx, "pairing code length invalid must be %d", PIV_PAIRING_CODE_LEN);
+		return SC_ERROR_INVALID_ARGUMENTS;
+	}
+	for (i = 0; i < PIV_PAIRING_CODE_LEN; i++) {
+		if (!isdigit(option[i])) {
+			sc_log(card->ctx, "pairing code must be %d decimal digits",PIV_PAIRING_CODE_LEN);
+			return SC_ERROR_INVALID_ARGUMENTS;
+		}
+	}
+	return SC_SUCCESS;
+}
+#endif
+
 static int piv_load_options(sc_card_t *card)
 {
 	int r;
@@ -1592,9 +1613,11 @@ static int piv_load_options(sc_card_t *card)
 #ifdef ENABLE_PIV_SM
 	/* pairing code is 8 decimal digits and is card specific */
 	if ((option = getenv("PIV_PAIRING_CODE")) != NULL) {
-		sc_log(card->ctx,"getenv(\"PIV_PAIRING_CODE\")=\"%s\"", option);
-		memcpy(priv->pairing_code, option, MIN(strlen(option), 8));
-		piv_pairing_code_found = 1;
+		sc_log(card->ctx,"getenv(\"PIV_PAIRING_CODE\") found");
+		if (piv_parse_pairing_code(card, option) == SC_SUCCESS) {
+			memcpy(priv->pairing_code, option, PIV_PAIRING_CODE_LEN);
+			piv_pairing_code_found = 1;
+		}
 	}
 
 	if ((option = getenv("PIV_USE_SM"))!= NULL) {
@@ -1650,8 +1673,10 @@ static int piv_load_options(sc_card_t *card)
 
 			/* This is really a card specific value and should not be in the conf file */
 			if (piv_pairing_code_found == 0) {
-				option = scconf_get_str(block, "piv_pairing_code", "00000000");
-				memcpy(priv->pairing_code, option, MIN(strlen(option), 8));
+				option = scconf_get_str(block, "piv_pairing_code", NULL);
+				if (option && piv_parse_pairing_code(card, option) == SC_SUCCESS) {
+					memcpy(priv->pairing_code, option, PIV_PAIRING_CODE_LEN);
+				}
 			}
 #endif
 			/*
