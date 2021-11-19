@@ -3177,7 +3177,9 @@ piv_cache_internal_data(sc_card_t *card, int enumtag)
 		if (tag && taglen > 0 && (((*tag) & 0x80) || ((*tag) & 0x01)))
 			compressed = 1;
 
+#ifdef ENABLE_PIV_SM
 		cvc_start = (u8 *)tag + taglen; /* save for later as cvs (if present) follows  0x71 */
+#endif
 
 		tag = sc_asn1_find_tag(card->ctx, body, bodylen, 0x70, &taglen);
 		if (tag == NULL)
