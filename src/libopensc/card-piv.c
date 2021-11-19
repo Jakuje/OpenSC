@@ -1485,7 +1485,6 @@ int piv_decode_cvc(sc_card_t * card, u8 **buf, size_t *buflen,
 	size_t taglen;
 	size_t signaturebits;
 
-
 	SC_FUNC_CALLED(card->ctx, SC_LOG_DEBUG_VERBOSE);
 
 	/* If already read and matches previous version return SC_SUCCESS */
@@ -3146,6 +3145,10 @@ piv_cache_internal_data(sc_card_t *card, int enumtag)
 	size_t bodylen;
 	int compressed = 0;
 	int r = SC_SUCCESS;
+#ifdef ENABLE_PIV_SM
+	u8* cvc_start = NULL;
+	size_t cvc_len = 0;
+#endif
 
 	/* if already cached */
 	if (priv->obj_cache[enumtag].internal_obj_data && priv->obj_cache[enumtag].internal_obj_len) {
@@ -3174,6 +3177,8 @@ piv_cache_internal_data(sc_card_t *card, int enumtag)
 		if (tag && taglen > 0 && (((*tag) & 0x80) || ((*tag) & 0x01)))
 			compressed = 1;
 
+		cvc_start = (u8 *)tag + taglen; /* save for later as cvs (if present) follows  0x71 */
+
 		tag = sc_asn1_find_tag(card->ctx, body, bodylen, 0x70, &taglen);
 		if (tag == NULL)
 			LOG_FUNC_RETURN(card->ctx, SC_ERROR_OBJECT_NOT_VALID);
@@ -3194,30 +3199,21 @@ piv_cache_internal_data(sc_card_t *card, int enumtag)
 #ifdef ENABLE_PIV_SM
 		/* PIV_OBJ_SM_CERT_SIGNER  CERT OBJECT may also have a intermediate CVC */
 		if (piv_objects[enumtag].flags & PIV_OBJECT_TYPE_CVC) {
-			if ((tag = sc_asn1_find_tag(card->ctx, body, bodylen, 0x7F21, &taglen)) != NULL) {
-				/* want to save the CVC TLV  so need to back up the tag pointer */
-				if (taglen < 128) {
-					tag -= 3;
-					taglen += 3;
-				} else if (taglen < 256) {
-					tag -= 4;
-					taglen += 4;
-				} else if (taglen < 256*256) {
-					tag -= 5;
-					taglen += 5;
-				} else {
-					sc_log(card->ctx, "CVC  in SM Certificate Signer to long taglen:%"SC_FORMAT_LEN_SIZE_T"u", taglen);
-					LOG_FUNC_RETURN(card->ctx, SC_ERROR_OBJECT_NOT_VALID);
+			/* cvc if present should be at cvc_start.
+			 * find the tag(T) and get value(V) and len(L) from TLV.
+			 * Could reconstruct ASN1 of (T)(L) stating location from length and known tag.
+			 * as the size of (L) depends on the length of value
+			 */
+			if ((tag = sc_asn1_find_tag(card->ctx, body, bodylen, 0x7F21, &taglen)) != NULL
+					&& cvc_start && cvc_start < tag
+					&& cvc_start[0] == 0x7f && cvc_start[1] == 0x21) {
+				cvc_len = tag - cvc_start + taglen;
+				/* decode the intermediate CVC */
+				r = piv_decode_cvc(card, &cvc_start, &cvc_len, &priv->sm_in_cvc);
+				if (r < 0) {
+					sc_log(card->ctx,"unable to parse intermediate CVC: %d skipping",r);
 				}
-				/* tag now points at TLV or NULL */
-				if (tag && taglen) {
-					/* decode the intermediate CVC */
-					r = piv_decode_cvc(card,(u8 **)&tag, &taglen, &priv->sm_in_cvc);
-					if (r < 0) {
-						sc_log(card->ctx,"unable to parse intermediate CVC: %d skipping",r);
-					}
-					priv->sm_flags |= PIV_SM_FLAGS_SM_IN_CVC_PRESENT;
-				}
+				priv->sm_flags |= PIV_SM_FLAGS_SM_IN_CVC_PRESENT;
 			}
 		}
 #endif /* ENABLE_PIV_SM */
