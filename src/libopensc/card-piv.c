@@ -288,7 +288,7 @@ typedef struct piv_sm_session {
 	u8 enc_counter[16];
 	u8 enc_counter_last[16];
 
-	u8 dec_counter[16];
+	u8 resp_enc_counter[16];
 	u8 C_MCV[16];
 	u8 C_MCV_last[16];
 	u8 R_MCV[16];
@@ -1282,7 +1282,7 @@ static int piv_decode_apdu(sc_card_t *card, sc_apdu_t *plain, sc_apdu_t *sm_apdu
 	/* generate same IV used to encrypt response on card */
 	if (EVP_EncryptInit_ex(ed_ctx, (*cs->cipher_ecb)(), NULL, priv->sm_session.SKenc, zeros) != 1
 			|| EVP_CIPHER_CTX_set_padding(ed_ctx,0) != 1
-			|| EVP_EncryptUpdate(ed_ctx, IV, &outli, priv->sm_session.dec_counter, 16) != 1
+			|| EVP_EncryptUpdate(ed_ctx, IV, &outli, priv->sm_session.resp_enc_counter, 16) != 1
 			|| EVP_EncryptFinal_ex(ed_ctx, discard, &outdl) != 1
 			|| outdl != 0) {
 		sc_log(card->ctx,"SM encode failed in OpenSSL");
@@ -1372,7 +1372,7 @@ static int piv_decode_apdu(sc_card_t *card, sc_apdu_t *plain, sc_apdu_t *sm_apdu
 	plain->sw1 = *(status.value);
 	plain->sw2 = *(status.value + 1);
 	
-	piv_inc(priv->sm_session.dec_counter, sizeof(priv->sm_session.dec_counter));
+	piv_inc(priv->sm_session.resp_enc_counter, sizeof(priv->sm_session.resp_enc_counter));
 
 	r = SC_SUCCESS;
 err:
@@ -2505,8 +2505,8 @@ static int piv_sm_open(struct sc_card *card)
 	sc_mem_clear(&aeskeys, sizeof(aeskeys));
 
 	priv->sm_session.enc_counter[15] = 0x01;
-	priv->sm_session.dec_counter[0] = 0x80;
-	priv->sm_session.dec_counter[15] = 0x01;
+	priv->sm_session.resp_enc_counter[0] = 0x80;
+	priv->sm_session.resp_enc_counter[15] = 0x01;
 	/* C_MCV is zero */
 	/* R_MCV is zero */
 
