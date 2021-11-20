@@ -3782,7 +3782,7 @@ static int piv_general_mutual_authenticate(sc_card_t *card,
 	/* Get the witness data indicated by the TAG 0x80 */
 	witness_data = sc_asn1_find_tag(card->ctx, body,
 		body_len, 0x80, &witness_len);
-	if (!witness_len || body[0] != 0x80) {
+	if (!witness_len || body_len == 0 || body[0] != 0x80) {
 		sc_debug(card->ctx, SC_LOG_DEBUG_VERBOSE, "Invalid Challenge Data none found in TLV\n");
 		r =  SC_ERROR_INVALID_DATA;
 		goto err;
