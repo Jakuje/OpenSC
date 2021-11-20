@@ -186,7 +186,7 @@ enum {
 	typedef struct cipher_suite {
 		u8 id; /* taken from AID "AC" tag */
 		int field_length;
-		int nid;     /* for OpenSLL curves */
+		int nid;     /* for OpenSSL curves */
 		struct sc_object_id oid; /* for opensc */
 		int p1;	     /* for APDU */
 		size_t Qlen; /* size of pubkey 04||x||y for all keys */
@@ -967,7 +967,9 @@ static int piv_encode_apdu(sc_card_t *card, sc_apdu_t *plain, sc_apdu_t *sm_apdu
 	} else {
 		enc_datalen = ((plain->datalen + 15) / 16) * 16; /* may add extra 16 bytes */
 		padlen = enc_datalen - plain->datalen;
-		T87len = sc_asn1_put_tag(0x87, NULL, 1 + enc_datalen, NULL, 0, NULL);
+		r = T87len = sc_asn1_put_tag(0x87, NULL, 1 + enc_datalen, NULL, 0, NULL);
+		if (r < 0)
+			goto err;
 	}
 
 	if (plain->resplen == 0 || plain->le == 0)
@@ -983,7 +985,10 @@ static int piv_encode_apdu(sc_card_t *card, sc_apdu_t *plain, sc_apdu_t *sm_apdu
 
 	p = sbuf;
 	if (T87len != 0) {
-		sc_asn1_put_tag(0x87, NULL, 1 + enc_datalen, sbuf, sbuflen, &p);
+		 r = sc_asn1_put_tag(0x87, NULL, 1 + enc_datalen, sbuf, sbuflen, &p);
+		 if (r != SC_SUCCESS)
+			goto err;
+
 		*p++ = 0x01; /* padding context indicator */
 	
 
@@ -1131,7 +1136,7 @@ static int piv_get_sm_apdu(sc_card_t *card, sc_apdu_t *plain, sc_apdu_t **sm_apd
 }
 
 
-/* ASN1 callback to save adder and len of the object */
+/* ASN1 callback to save address and len of the object */
 static int piv_get_asn1_obj(sc_context_t *ctx, void *arg,  const u8 *obj, size_t len, int depth)
 {
 	struct sc_lv_data *al = arg;
@@ -1169,9 +1174,9 @@ static int piv_decode_apdu(sc_card_t *card, sc_apdu_t *plain, sc_apdu_t *sm_apdu
 	size_t MCVlen = 16;
 	size_t R_MCVlen = 0;
 
-        EVP_CIPHER_CTX *ed_ctx = NULL;
+	EVP_CIPHER_CTX *ed_ctx = NULL;
 #if OPENSSL_VERSION_NUMBER < 0x30000000L
-        CMAC_CTX *cmac_ctx  = NULL;
+	CMAC_CTX *cmac_ctx  = NULL;
 #else
 	EVP_MAC *mac = NULL;
 	EVP_MAC_CTX *cmac_ctx = NULL;
@@ -1299,7 +1304,7 @@ static int piv_decode_apdu(sc_card_t *card, sc_apdu_t *plain, sc_apdu_t *sm_apdu
 		p++; /* skip padding indicator */
 		inlen --;
 
-		if (inlen != inlen/16 * 16) {
+		if ((inlen % 16) != 0) {
 			sc_log(card->ctx,"SM encrypted data not multiple of 16");
 			r = SC_ERROR_SM_AUTHENTICATION_FAILED;
 			goto err;
@@ -1329,7 +1334,7 @@ static int piv_decode_apdu(sc_card_t *card, sc_apdu_t *plain, sc_apdu_t *sm_apdu
 				|| EVP_DecryptFinal_ex(ed_ctx, discard, &outdl) != 1
 				|| outdl != 0
 				|| outll != 16) {  /* should not happen */
-			sc_log(card->ctx,"SM _encode failed in OpenSSL");
+			sc_log(card->ctx,"SM _decode failed in OpenSSL");
 			piv_log_openssl(card->ctx);
 			r = SC_ERROR_SM_AUTHENTICATION_FAILED;
 			goto err;
@@ -1469,7 +1474,7 @@ static void piv_clear_sm_session(piv_sm_session_t *session)
 /*
  * Decode a card verifiable certificate as defined in NIST 800-73-4
  */
-int piv_decode_cvc(sc_card_t * card, u8 **buf, size_t *buflen,
+static int piv_decode_cvc(sc_card_t * card, u8 **buf, size_t *buflen,
 	piv_cvc_t *cvc)
 {
 	struct sc_asn1_entry asn1_piv_cvc[C_ASN1_PIV_CVC_SIZE];
@@ -1549,8 +1554,10 @@ int piv_decode_cvc(sc_card_t * card, u8 **buf, size_t *buflen,
 
 	/* save to reuse */
 	cvc->der.value = malloc(*buflen);
-	if (cvc->der.value == NULL)
+	if (cvc->der.value == NULL) {
+		free(cvc->body);
 		return SC_ERROR_OUT_OF_MEMORY;
+	}
 	cvc->der.len = *buflen;
 	memcpy(cvc->der.value, *buf, cvc->der.len);
 
@@ -2211,13 +2218,16 @@ static int piv_sm_open(struct sc_card *card)
 		goto err;
 	}
 
-	len2a = sc_asn1_put_tag(0x81, NULL, 1 + cs->IDshlen + Qehlen, NULL, 0, NULL);
-	len2b = sc_asn1_put_tag(0x80, NULL, 0, NULL, 0, NULL);
-	sbuflen = sc_asn1_put_tag(0x7C, NULL, len2a + len2b, NULL, 0, NULL);
-	if (sbuflen <= 0) {
-		r = SC_ERROR_INTERNAL;
+	r = len2a = sc_asn1_put_tag(0x81, NULL, 1 + cs->IDshlen + Qehlen, NULL, 0, NULL);
+	if (r < 0)
 		goto err;
-	}
+	r = len2b = sc_asn1_put_tag(0x80, NULL, 0, NULL, 0, NULL);
+	if (r < 0)
+		goto err;
+	r = sbuflen = sc_asn1_put_tag(0x7C, NULL, len2a + len2b, NULL, 0, NULL);
+	if (r < 0)
+		goto err;
+
 	sbuf = malloc(sbuflen);
 	if (sbuf == NULL) {
 		r = SC_ERROR_OUT_OF_MEMORY;
