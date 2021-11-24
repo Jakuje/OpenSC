@@ -3,7 +3,7 @@
  * card-default.c: Support for cards with no driver
  *
  * Copyright (C) 2001, 2002  Juha Yrjölä <juha.yrjola@iki.fi>
- * Copyright (C) 2005-2021  Douglas E. Engert <deengert@gmail.com>
+ * Copyright (C) 2005-2023  Douglas E. Engert <deengert@gmail.com>
  * Copyright (C) 2006, Identity Alliance, Thomas Harning <thomas.harning@identityalliance.com>
  * Copyright (C) 2007, EMC, Russell Larner <rlarner@rsa.com>
  *
@@ -1199,7 +1199,7 @@ static int piv_decode_apdu(sc_card_t *card, sc_apdu_t *plain, sc_apdu_t *sm_apdu
 #endif
 
 	struct sc_asn1_entry asn1_sm_response[C_ASN1_PIV_SM_RESPONSE_SIZE];
-	
+
 	SC_FUNC_CALLED(card->ctx, SC_LOG_DEBUG_VERBOSE);
 
 	sc_copy_asn1_entry(c_asn1_sm_response, asn1_sm_response);
@@ -1338,7 +1338,7 @@ static int piv_decode_apdu(sc_card_t *card, sc_apdu_t *plain, sc_apdu_t *sm_apdu
 
 		q = plain->resp;
 
-		/* first round encryptes Dec counter with zero IV, and does not save the output */
+		/* first round encryptes counter with zero IV, and does not save the output */
 		if (EVP_CIPHER_CTX_reset(ed_ctx) != 1
 				|| EVP_DecryptInit_ex(ed_ctx, (*cs->cipher_cbc)(), NULL, priv->sm_session.SKenc, IV) != 1
 				|| EVP_CIPHER_CTX_set_padding(ed_ctx,0) != 1
@@ -1384,7 +1384,7 @@ static int piv_decode_apdu(sc_card_t *card, sc_apdu_t *plain, sc_apdu_t *sm_apdu
 
 	plain->sw1 = *(status.value);
 	plain->sw2 = *(status.value + 1);
-	
+
 	piv_inc(priv->sm_session.resp_enc_counter, sizeof(priv->sm_session.resp_enc_counter));
 
 	r = SC_SUCCESS;
@@ -1575,9 +1575,8 @@ static int piv_decode_cvc(sc_card_t * card, u8 **buf, size_t *buflen,
 
 	LOG_FUNC_RETURN(card->ctx, SC_SUCCESS);
 }
-#endif /* ENABLE_PIV_SM */
 
-#ifdef ENABLE_PIV_SM
+
 int piv_parse_pairing_code(sc_card_t *card, const char *option)
 {
 	size_t i;
@@ -1672,16 +1671,17 @@ static int piv_load_options(sc_card_t *card)
 			if (piv_use_sm_found == 0) {
 				option = scconf_get_str(block, "piv_use_sm", "default");
 				sc_log(card->ctx,"conf: \"piv_use_sm\"=\"%s\"", option);
-				if  (strcmp(option,"default")) {
-					if (!strcmp(option, "never")) {
-						priv->sm_flags |= PIV_SM_FLAGS_NEVER;
-					}
-					else if (!strcmp(option, "always")) {
-						priv->sm_flags |= PIV_SM_FLAGS_ALWAYS;
-					}
-					else {
-						sc_log(card->ctx,"Invalid piv_use_sm: \"%s\"", option);
-					}
+				if  (!strcmp(option,"default")) {
+					/* no new flags */
+				}
+				else if (!strcmp(option, "never")) {
+					priv->sm_flags |= PIV_SM_FLAGS_NEVER;
+				}
+				else if (!strcmp(option, "always")) {
+					priv->sm_flags |= PIV_SM_FLAGS_ALWAYS;
+				}
+				else {
+					sc_log(card->ctx,"Invalid piv_use_sm: \"%s\"", option);
 				}
 			}
 
@@ -1705,7 +1705,7 @@ static int piv_load_options(sc_card_t *card)
 					if (priv->max_object_size < PIV_MAX_OBJECT_SIZE)
 						priv->max_object_size = PIV_MAX_OBJECT_SIZE;
 					else
-					priv->max_object_size = MAX_FILE_SIZE;
+						priv->max_object_size = MAX_FILE_SIZE;
 				}
 				sc_log(card->ctx,"piv_max_object_size: %d",priv->max_object_size);
 			}
@@ -1769,8 +1769,8 @@ static int piv_general_io(sc_card_t *card, int ins, int p1, int p2,
 		apdu.le = (recvbuflen > 256) ? 256 : recvbuflen;
 		apdu.resplen = recvbuflen;
 	} else {
-		 apdu.le = 0;
-		 apdu.resplen = 0;
+		apdu.le = 0;
+		apdu.resplen = 0;
 	}
 	apdu.resp =  recvbuf;
 
@@ -1857,15 +1857,19 @@ static int piv_send_vci_pairing_code(struct sc_card *card, u8 *paring_code)
 	memset(&sm_apdu,0,sizeof(sm_apdu));
 	/* build sm_apdu and set alloc sm_apdu.resp */
 	r = piv_encode_apdu(card, &plain, &sm_apdu);
-	if (r < 0)
+	if (r < 0) {
 		free(sm_apdu.resp);
-	LOG_TEST_RET(card->ctx, r, "piv_encode_apdu failed");
+		sc_log(card->ctx, "piv_encode_apdu failed");
+		LOG_FUNC_RETURN(card->ctx, r);
+	}
 
 	sm_apdu.flags += SC_APDU_FLAGS_NO_SM; /* run as is */
 	r = sc_transmit_apdu(card, &sm_apdu);
-	if (r < 0)
+	if (r < 0) {
 		free(sm_apdu.resp);
-	LOG_TEST_RET(card->ctx, r, "transmit failed");
+		sc_log(card->ctx, "transmit failed");
+		LOG_FUNC_RETURN(card->ctx, r);
+	}
 
 	r = piv_decode_apdu(card, &plain, &sm_apdu);
 	free(sm_apdu.resp);
@@ -1954,7 +1958,7 @@ static int piv_sm_verify_certs(struct sc_card *card)
 	/*
 	 * Get the PIV_OBJ_SM_CERT_SIGNER and optional sm_in_cvc in cache
 	 * both are in same object. Rbuf, and rbuflen are needed but not used here
-	 * sm_cvc and sm_in_cvc both have EC_keys sm_in_cvc may have RSA sgnature
+	 * sm_cvc and sm_in_cvc both have EC_keys sm_in_cvc may have RSA sginature
 	 */
 	r = piv_get_cached_data(card, PIV_OBJ_SM_CERT_SIGNER, &rbuf, &rbuflen);
 	if (r < 0) {
@@ -2161,7 +2165,17 @@ static int piv_sm_open(struct sc_card *card)
 
 	SC_FUNC_CALLED(card->ctx, SC_LOG_DEBUG_VERBOSE);
 
-	/* Only callable from the drive. piv_sm_close will catch case where sm.c calls */
+	/*
+	 * The SM routines try and call this on their own.
+	 * This routine should only be called by the card driver.
+	 * which has set PIV_SM_FLAGS_DEFER_OPEN and unset in
+	 * in reader_lock_obtained
+	 * after testing PIC applet is active so SM is setup in same transaction
+	 * as the command we are trying to run with SM.
+	 * this avoids situation where the SM is established, and then reset by
+	 * some other application without getting anything done or in
+	 * a loop, each trying to reestablish a SM session and run command.
+	 */
 	if (!(priv->sm_flags & PIV_SM_FLAGS_DEFER_OPEN)) {
 		LOG_FUNC_RETURN(card->ctx,SC_ERROR_NOT_ALLOWED);
 	}
@@ -2281,7 +2295,7 @@ static int piv_sm_open(struct sc_card *card)
 
 	rbuflen = r;
 	p = rbuf;
-	
+
 	body = sc_asn1_find_tag(card->ctx, rbuf, rbuflen, 0x7C, &bodylen);
 	if (body == NULL || bodylen < 20 || rbuf[0] != 0x7C) {
 		sc_log(card->ctx, "SM response data to short");
@@ -2344,7 +2358,7 @@ static int piv_sm_open(struct sc_card *card)
 
 	/* Step H6  need left most 8 bytes of hash of sm_cvc */
 	{
-		u8 hash[SHA384_DIGEST_LENGTH] = {0}; /* 384 is max */
+		u8 hash[SHA256_DIGEST_LENGTH] = {0};
 		const u8* tag;
 		size_t taglen;
 		const u8* tmpder;
@@ -2358,8 +2372,8 @@ static int piv_sm_open(struct sc_card *card)
 		}
 
 		/* debug choice */
-		tmpder = (1==1)? cvcder:tag;
-		tmpderlen = (1==1)?cvclen:taglen;
+		tmpder =  cvcder;
+		tmpderlen = cvclen;
 
 		if (EVP_DigestInit(hash_ctx,EVP_sha256()) != 1
 				|| EVP_DigestUpdate(hash_ctx, tmpder, tmpderlen) != 1
@@ -2428,9 +2442,9 @@ static int piv_sm_open(struct sc_card *card)
 		piv_log_openssl(card->ctx);
 		r = SC_ERROR_SM_AUTHENTICATION_FAILED;
 		goto err;
-		}
+	}
 
-		sc_log(card->ctx, "debug Zlen:%"SC_FORMAT_LEN_SIZE_T"u Z[0]:0x%2.2x", Zlen, Z[0]);
+	sc_log(card->ctx, "debug Zlen:%"SC_FORMAT_LEN_SIZE_T"u Z[0]:0x%2.2x", Zlen, Z[0]);
 
 	/* Step H9 zeroize deh from step H2 */
 	EVP_PKEY_free(eph_pkey); /* OpenSSL  BN_clear_free calls OPENSSL_cleanse */
@@ -2614,7 +2628,7 @@ err:
 	priv->sm_flags &= ~PIV_SM_FLAGS_DEFER_OPEN;
 	if (r != 0)
 		 memset(&priv->sm_session, 0, sizeof(piv_sm_session_t));
- 	piv_log_openssl(card->ctx); /* catch any not logged above */
+	piv_log_openssl(card->ctx); /* catch any not logged above */
 
 	sc_unlock(card);
 
@@ -2831,7 +2845,7 @@ static int piv_find_aid(sc_card_t * card)
 		if (tag != NULL) {
 			priv->init_flags |= PIV_INIT_AID_PARSED;
 			/* look for 800-73-4 0xAC for Cipher Suite Algorithm Identifier Table 14 */
-			/* There maybe more then one 0xAC tag, loop to find all */
+			/* There may be more than one 0xAC tag, loop to find all */
 
 			nextac = tag;
 			while((actag = sc_asn1_find_tag(card->ctx, nextac, taglen - (nextac - tag),
@@ -3016,7 +3030,7 @@ piv_get_data(sc_card_t * card, int enumtag, u8 **buf, size_t *buf_len)
 	 */
 	sc_log(card->ctx,"enumtag:%d sm_ctx.sm_mode:%d piv_objects[enumtag].flags:0x%8.8x sm_flags:0x%8.8lx it_flags:0x%8.8x",
 			enumtag, card->sm_ctx.sm_mode, piv_objects[enumtag].flags, priv->sm_flags, priv->init_flags);
-	 if (priv->sm_flags & PIV_SM_FLAGS_SM_IS_ACTIVE
+	if (priv->sm_flags & PIV_SM_FLAGS_SM_IS_ACTIVE
 			&& enumtag != PIV_OBJ_DISCOVERY
 			&& card->sm_ctx.sm_mode == SM_MODE_TRANSMIT
 			&& !(piv_objects[enumtag].flags & PIV_OBJECT_NEEDS_PIN)
@@ -3240,7 +3254,7 @@ piv_cache_internal_data(sc_card_t *card, int enumtag)
 			}
 		}
 #endif /* ENABLE_PIV_SM */
-	
+
 	/* convert pub key to internal */
 	}
 	else if (piv_objects[enumtag].flags & PIV_OBJECT_TYPE_PUBKEY) {
@@ -3303,7 +3317,7 @@ piv_read_binary(sc_card_t *card, unsigned int idx, unsigned char *buf, size_t co
 			}
 
 		/* TODO Biometric Information Templates Group Template uses tag 7f61 */
-			
+
 			body = sc_asn1_find_tag(card->ctx, rbuf, rbuflen, rbuf[0], &bodylen);
 			if (body == NULL) {
 				/* if missing, assume its the body */
@@ -5758,7 +5772,7 @@ static int piv_init(sc_card_t *card)
 			sc_log(card->ctx,"User has requested PIV_SM_FLAGS_ALWAYS, SM has failed to start, don't use the card");
 			LOG_FUNC_RETURN(card->ctx, SC_ERROR_NOT_ALLOWED);
 		}
-		
+
 		/* user has wrong or no required pairing code */
 		if (r == SC_ERROR_PIN_CODE_INCORRECT)
 			LOG_FUNC_RETURN(card->ctx, r);
@@ -5795,7 +5809,7 @@ static int piv_check_sw(struct sc_card *card, unsigned int sw1, unsigned int sw2
 	/* may be called before piv_init has allocated priv */
 	if (priv) {
 		/* need to save sw1 and sw2 if trying to determine card_state from pin_cmd */
-		
+
 		if (priv->pin_cmd_verify) {
 			priv->pin_cmd_verify_sw1 = sw1;
 			priv->pin_cmd_verify_sw2 = sw2;
@@ -6071,7 +6085,6 @@ static int piv_logout(sc_card_t *card)
 			break;
 		default:
 			 LOG_FUNC_RETURN(card->ctx, SC_ERROR_NOT_SUPPORTED);
-		
 	}
 	if (priv) {
 		sc_format_apdu(card, &apdu, SC_APDU_CASE_1, 0x20, 0xFF, priv->pin_preference);
