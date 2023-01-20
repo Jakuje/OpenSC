@@ -49,7 +49,6 @@
 #if !defined(OPENSSL_NO_EC)
 #include <openssl/ec.h>
 #endif
-#include <openssl/evp.h>
 #include <openssl/err.h>
 
 #define piv_log_openssl(C) \
@@ -1609,13 +1608,14 @@ static int piv_load_options(sc_card_t *card)
 	int piv_use_sm_found = 0;
 #endif
 
-	if ((option = getenv("PIV_MAX_OBJECT_SIZE")) != NULL) {
+	option = getenv("PIV_MAX_OBJECT_SIZE");
+	if (option && option[0] != '\0') {
 		sc_log(card->ctx, "getenv(\"PIV_MAX_OBJECT_SIZE\")=\"%s\"", option);
 		priv->max_object_size = atoi(option);
 		if (priv->max_object_size < PIV_MAX_OBJECT_SIZE || priv->max_object_size > MAX_FILE_SIZE) {
 			sc_log(card->ctx,"Invalid max_object_size: \"%d\"", priv->max_object_size);
 			if (priv->max_object_size < PIV_MAX_OBJECT_SIZE)
-				priv->max_object_size  = PIV_MAX_OBJECT_SIZE;
+				priv->max_object_size = PIV_MAX_OBJECT_SIZE;
 			else
 				priv->max_object_size = MAX_FILE_SIZE; /* conserative value if error */
 		} else
@@ -5289,9 +5289,6 @@ static int piv_match_card_continued(sc_card_t *card)
 	sc_apdu_t apdu;
 	u8 yubico_version_buf[3] = {0};
 
-	/* Since we send an APDU, the card's logout function may be called...
-	 * however it may be in dirty memory */
-
 	r = sc_lock(card); /* hold until match or init is complete */
 	if (r != SC_SUCCESS) {
 		sc_debug(card->ctx, SC_LOG_DEBUG_VERBOSE, "sc_lock failed\n");
@@ -5503,13 +5500,11 @@ static int piv_match_card_continued(sc_card_t *card)
 						priv->card_issues |= CI_DISCOVERY_USELESS;
 						priv->obj_cache[PIV_OBJ_DISCOVERY].flags |= PIV_OBJ_CACHE_NOT_PRESENT;
 						break;
-					case SC_CARD_TYPE_PIV_II_GEMALTO_DUAL_CAC:
 					case SC_CARD_TYPE_PIV_II_GEMALTO:
 						card->type = SC_CARD_TYPE_PIV_II_GEMALTO_DUAL_CAC;
 						priv->card_issues |= CI_DISCOVERY_USELESS;
 						priv->obj_cache[PIV_OBJ_DISCOVERY].flags |= PIV_OBJ_CACHE_NOT_PRESENT;
 						break;
-					case SC_CARD_TYPE_PIV_II_OBERTHUR_DUAL_CAC:
 					case SC_CARD_TYPE_PIV_II_OBERTHUR:
 						card->type =  SC_CARD_TYPE_PIV_II_OBERTHUR_DUAL_CAC;
 						priv->card_issues |= CI_DISCOVERY_USELESS;
@@ -5519,7 +5514,6 @@ static int piv_match_card_continued(sc_card_t *card)
 			}
 			break;
 
-			/*  TODO Move up if user forced it to be one of the CAC types, assume it is CAC */
 		case SC_CARD_TYPE_PIV_II_GI_DE_DUAL_CAC:
 		case SC_CARD_TYPE_PIV_II_GEMALTO_DUAL_CAC:
 		case SC_CARD_TYPE_PIV_II_OBERTHUR_DUAL_CAC:
@@ -6005,7 +5999,7 @@ piv_pin_cmd(sc_card_t *card, struct sc_pin_cmd_data *data, int *tries_left)
 	r = iso_drv->ops->pin_cmd(card, data, tries_left);
 	priv->pin_cmd_verify = 0;
 
-	/* tell user veriy not supported on contactless without VCI */
+	/* tell user verify not supported on contactless without VCI */
 	if (priv->pin_cmd_verify_sw1 == 0x69 && priv->pin_cmd_verify_sw2 == 0x82
 			&& priv->init_flags & PIV_INIT_CONTACTLESS
 			&& card->type == SC_CARD_TYPE_PIV_II_800_73_4) {
