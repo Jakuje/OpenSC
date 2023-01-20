@@ -1248,8 +1248,7 @@ static int piv_decode_apdu(sc_card_t *card, sc_apdu_t *plain, sc_apdu_t *sm_apdu
 	mac = EVP_MAC_fetch(NULL, "cmac", NULL);
 	cmac_params[cmac_params_n++] = OSSL_PARAM_construct_utf8_string("cipher", cs->cipher_cbc_name, 0);
 	cmac_params[cmac_params_n] = OSSL_PARAM_construct_end();
-	if (mac == NULL
-			|| (cmac_ctx = EVP_MAC_CTX_new(mac)) == NULL) {
+	if (mac == NULL || (cmac_ctx = EVP_MAC_CTX_new(mac)) == NULL) {
 		piv_log_openssl(card->ctx);
 		r = SC_ERROR_INTERNAL;
 		goto err;
@@ -1987,6 +1986,7 @@ static int piv_sm_verify_certs(struct sc_card *card)
 		sc_log(card->ctx,"OpenSSL failed to get pubkey from SM_CERT_SIGNER");
 		piv_log_openssl(card->ctx);
 		r = SC_ERROR_SM_AUTHENTICATION_FAILED;
+		goto err;
 	}
 
 	/* if intermediate sm_in_cvc present, cert signed it and sm_cvc is signed by sm_in_cvc */
@@ -2403,7 +2403,7 @@ static int piv_sm_open(struct sc_card *card)
 		piv_log_openssl(card->ctx);
 		r = SC_ERROR_SM_AUTHENTICATION_FAILED;
 		goto err;
-		}
+	}
 #else
 	Cicc_params_n = 0;
 	Cicc_params[Cicc_params_n++] = OSSL_PARAM_construct_utf8_string( "group", cs->curve_group, 0);
@@ -2427,6 +2427,7 @@ static int piv_sm_open(struct sc_card *card)
 	if (Q2OS(cs->field_length, priv->sm_cvc.publicPoint, priv->sm_cvc.publicPointlen, Qsicc_OS, &Qsicc_OSlen)) {
 		sc_log(card->ctx,"Q2OS for Qsicc failed");
 		r = SC_ERROR_INTERNAL;
+		goto err;
 	}
 
 	/* Step H8 Compute the shared secret Z */
@@ -5685,7 +5686,7 @@ static int piv_init(sc_card_t *card)
 			"Max send = %"SC_FORMAT_LEN_SIZE_T"u recv = %"SC_FORMAT_LEN_SIZE_T"u card->type = %d",
 			card->max_send_size, card->max_recv_size, card->type);
 	card->cla = 0x00;
-	if(card->name == NULL)
+	if (card->name == NULL)
 		card->name = card->driver->name;
 
 	priv->enumtag = piv_aids[0].enumtag;
