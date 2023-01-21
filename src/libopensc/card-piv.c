@@ -5248,7 +5248,7 @@ static int piv_match_card(sc_card_t *card)
 	
 	sc_debug(card->ctx,SC_LOG_DEBUG_MATCH, "PIV_MATCH card->type:%d\n", card->type);
 	/* piv_match_card may be called with card->type, set by opensc.conf */
-	/* user provide card type must be one we know */
+	/* user provided card type must be one we know */
 	switch (card->type) {
 		case -1:
 		case SC_CARD_TYPE_PIV_II_GENERIC:
@@ -5272,14 +5272,15 @@ static int piv_match_card(sc_card_t *card)
 
 	/* its one we know, or we can test for it in piv_init */
 	r = piv_match_card_continued(card);
-	if (r == 0) {
+	if (r < 0) {
 		/* clean up what we left in card */
 		sc_unlock(card);
 		piv_finish(card);
+		return 0; /* match failed */
 	}
 
 	sc_debug(card->ctx,SC_LOG_DEBUG_MATCH, "PIV_MATCH card->type:%d r:%d\n", card->type,r);
-	return r;
+	return 1; /* matched */
 }
 
 
@@ -5297,11 +5298,11 @@ static int piv_match_card_continued(sc_card_t *card)
 		sc_debug(card->ctx, SC_LOG_DEBUG_VERBOSE, "sc_lock failed\n");
 		piv_finish(card);
 		card->type = saved_type;
-		return 0;
+		LOG_FUNC_RETURN(card->ctx, r);
 	}
 
 	/* piv_match_card may be called with card->type, set by opensc.conf */
-	/* User provide card type must be one we know */
+	/* User provided card type must be one we know */
 
 	switch (card->type) {
 		case -1:
@@ -5322,7 +5323,7 @@ static int piv_match_card_continued(sc_card_t *card)
 			type = card->type;
 			break;
 		default:
-			return 0; /* can not handle the card */
+			LOG_FUNC_RETURN(card->ctx, SC_ERROR_WRONG_CARD);
 	}
 	sc_debug(card->ctx,SC_LOG_DEBUG_MATCH, "PIV_MATCH card->type:%d type:%d r:%d\n", card->type, type, r);
 	if (type == -1) {
@@ -5646,7 +5647,7 @@ static int piv_match_card_continued(sc_card_t *card)
 
 	sc_debug(card->ctx,SC_LOG_DEBUG_MATCH, "PIV_MATCH card->type:%d r2:%d CI:%08x r:%d\n", card->type, r2, priv->card_issues, r);
 	/* Matched, caller will use or free priv and sc_lock as needed */
-	return 1; /* match */
+	LOG_FUNC_RETURN(card->ctx, SC_SUCCESS);
 
 err:
 	sc_debug(card->ctx,SC_LOG_DEBUG_MATCH, "PIV_MATCH card->type:%d r2:%d CI:%08x r:%d\n", card->type, r2, priv->card_issues, r);
@@ -5654,7 +5655,7 @@ err:
 	sc_unlock(card);
 	piv_finish(card);
 	card->type = saved_type;
-	return 0;
+	LOG_FUNC_RETURN(card->ctx, r);
 }
 
 
@@ -5670,7 +5671,7 @@ static int piv_init(sc_card_t *card)
 	/* piv_match_card_continued called from card match should have left card->drv_data */
 	if (priv == NULL) {
 		r = piv_match_card_continued(card);
-		if (r != 1) {
+		if (r < 0) {
 			sc_log(card->ctx,"piv_match_card_continued failed card->type:%d", card->type);
 			sc_unlock(card);
 			piv_finish(card);
