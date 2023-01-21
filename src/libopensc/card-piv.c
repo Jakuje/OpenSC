@@ -2117,9 +2117,11 @@ static int piv_sm_open(struct sc_card *card)
 	/* pub EC key from card Cicc in sm_cvc */
 	EVP_PKEY_CTX *Cicc_ctx = NULL;
 	EVP_PKEY *Cicc_pkey = NULL;
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
 	EC_KEY *Cicc_eckey = NULL;
 	EC_POINT *Cicc_point = NULL;
 	EC_GROUP *Cicc_group = NULL;
+#endif
 
 	/* shared secret key Z */
 	EVP_PKEY_CTX *Z_ctx = NULL;
