@@ -5272,7 +5272,7 @@ static int piv_match_card(sc_card_t *card)
 
 	/* its one we know, or we can test for it in piv_init */
 	r = piv_match_card_continued(card);
-	if (r < 0) {
+	if (r < 0 || !card->drv_data) {
 		/* clean up what we left in card */
 		sc_unlock(card);
 		piv_finish(card);
@@ -5671,7 +5671,8 @@ static int piv_init(sc_card_t *card)
 	/* piv_match_card_continued called from card match should have left card->drv_data */
 	if (priv == NULL) {
 		r = piv_match_card_continued(card);
-		if (r < 0) {
+		priv = PIV_DATA(card);
+		if (r < 0 || !priv) {
 			sc_log(card->ctx,"piv_match_card_continued failed card->type:%d", card->type);
 			sc_unlock(card);
 			piv_finish(card);
