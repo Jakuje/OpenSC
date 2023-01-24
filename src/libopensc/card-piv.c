@@ -139,11 +139,13 @@ enum {
  * PIV_OBJ_CACHE_VALID means the data in the cache can be used.
  * It might have zero length indicating that the object was not found.
  * PIV_OBJ_CACHE_NOT_PRESENT means do not even try to read the object.
- * These objects will only be present if the history object says
+ * Either because the object did not parse or
+ * these objects will only be present if the history object says
  * they are on the card, or the discovery or history object in not present.
- * If the file lilsted in the history object offCardCertURL was found,
+ * If the file listed in the history object offCardCertURL was found,
  * its certs will be read into the cache and PIV_OBJ_CACHE_VALID set
  * and PIV_OBJ_CACHE_NOT_PRESENT unset.
+ * 
  */
 
 <<<<<<< HEAD
@@ -836,6 +838,7 @@ static int piv_get_cached_data(sc_card_t * card, int enumtag, u8 **buf, size_t *
 static int piv_cache_internal_data(sc_card_t *card, int enumtag);
 static int piv_logout(sc_card_t *card);
 static int piv_match_card_continued(sc_card_t *card);
+static int piv_obj_cache_free_entry(sc_card_t *card, int enumtag, int flags);
 
 /* compare  sc_asn1_read_tag to expected tag_long */
 /*  after #2079  can be converted to  inline  "if ((cla<<24 ! tag) == tag_long))" */
@@ -3129,6 +3132,7 @@ piv_get_cached_data(sc_card_t * card, int enumtag, u8 **buf, size_t *buf_len)
 	 * If we know it can not be on the card  i.e. History object
 	 * has been read, and we know what other certs may or
 	 * may not be on the card. We can avoid extra overhead
+	 * Also used if object on card was not parsable 
 	 */
 
 	if (priv->obj_cache[enumtag].flags & PIV_OBJ_CACHE_NOT_PRESENT) {
@@ -3507,17 +3511,7 @@ static int piv_write_binary(sc_card_t *card, unsigned int idx,
 
 		/* if  cached, remove old entry */
 		if (priv->obj_cache[enumtag].flags & PIV_OBJ_CACHE_VALID) {
-			priv->obj_cache[enumtag].flags = 0;
-			if (priv->obj_cache[enumtag].obj_data) {
-				free(priv->obj_cache[enumtag].obj_data);
-				priv->obj_cache[enumtag].obj_data = NULL;
-				priv->obj_cache[enumtag].obj_len = 0;
-			}
-			if (priv->obj_cache[enumtag].internal_obj_data) {
-				free(priv->obj_cache[enumtag].internal_obj_data);
-				priv->obj_cache[enumtag].internal_obj_data = NULL;
-				priv->obj_cache[enumtag].internal_obj_len = 0;
-			}
+			piv_obj_cache_free_entry(card, enumtag, 0);
 		}
 
 		if (idx != 0)
@@ -4790,14 +4784,12 @@ static int piv_parse_discovery(sc_card_t *card, u8 * rbuf, size_t rbuflen, int a
 			r = SC_ERROR_INVALID_CARD; /* This is an error */
 			goto err;
 		}
-		priv->init_flags |= PIV_INIT_DISCOVERY_PARSED;
 		if (aid_only == 0) {
 			pinp = sc_asn1_find_tag(card->ctx, body, bodylen, 0x5F2F, &pinplen);
 			if (pinp && pinplen == 2) {
 				priv->init_flags |= PIV_INIT_DISCOVERY_PP;
 				priv->pin_policy = (*pinp << 8) + *(pinp + 1);
 				sc_log(card->ctx, "Discovery pinp flags=0x%2.2x 0x%2.2x",*pinp, *(pinp+1));
-				r = SC_SUCCESS;
 				if ((priv->pin_policy & (PIV_PP_PIN | PIV_PP_GLOBAL))
 						== (PIV_PP_PIN | PIV_PP_GLOBAL)
 						&& priv->pin_policy & PIV_PP_GLOBAL_PRIMARY) {
@@ -4806,6 +4798,8 @@ static int piv_parse_discovery(sc_card_t *card, u8 * rbuf, size_t rbuflen, int a
 				}
 			}
 		}
+		r = SC_SUCCESS;
+		priv->init_flags |= PIV_INIT_DISCOVERY_PARSED;
 	}
 
 err:
@@ -4922,9 +4916,8 @@ err:
 static int piv_find_discovery(sc_card_t *card)
 {
 	int r = 0;
-	u8  rbuf[256];
-	size_t rbuflen = sizeof(rbuf);
-	u8 * arbuf = rbuf;
+	size_t rbuflen;
+	u8 * rbuf  = NULL;
 	piv_private_data_t * priv = PIV_DATA(card);
 
 	SC_FUNC_CALLED(card->ctx, SC_LOG_DEBUG_VERBOSE);
@@ -4934,31 +4927,35 @@ static int piv_find_discovery(sc_card_t *card)
 	 * we use the discovery object to test if card present, and
 	 * if PIV AID is active.
 	 */
+	if (priv->obj_cache[PIV_OBJ_DISCOVERY].flags & PIV_OBJ_CACHE_NOT_PRESENT) {
+		r = SC_ERROR_DATA_OBJECT_NOT_FOUND;
+		goto end;
+	}
 
 	/* If not valid: read, test,  cache */
 	if (!(priv->obj_cache[PIV_OBJ_DISCOVERY].flags & PIV_OBJ_CACHE_VALID)) {
 		r = piv_process_discovery(card);
 	} else {
 		/* if already in cache,force read */
-		r = piv_get_data(card, PIV_OBJ_DISCOVERY, &arbuf, &rbuflen);
+		rbuflen = 1;
+		r = piv_get_data(card, PIV_OBJ_DISCOVERY, &rbuf, &rbuflen);
 		/* if same response as last, no need to parse */
+		if ( r == 0 && priv->obj_cache[PIV_OBJ_DISCOVERY].obj_len == 0)
+			goto end;
+
 		if (r >= 0 && priv->obj_cache[PIV_OBJ_DISCOVERY].obj_len == rbuflen
 				&& priv->obj_cache[PIV_OBJ_DISCOVERY].obj_data
-				&& !memcmp(arbuf, priv->obj_cache[PIV_OBJ_DISCOVERY].obj_data, rbuflen)) {
-				LOG_FUNC_RETURN(card->ctx, r);
+				&& !memcmp(rbuf, priv->obj_cache[PIV_OBJ_DISCOVERY].obj_data, rbuflen)) {
+				goto end;
 		}
-		/* This should not happen */
-		sc_log(card->ctx,"Discovery not the same as previously read object, using new version");
-
-		free(priv->obj_cache[PIV_OBJ_DISCOVERY].obj_data);
-		priv->obj_cache[PIV_OBJ_DISCOVERY].obj_data = malloc(rbuflen);
-		if (priv->obj_cache[PIV_OBJ_DISCOVERY].obj_data == NULL)
-			LOG_FUNC_RETURN(card->ctx, SC_ERROR_OUT_OF_MEMORY);
-		memcpy(priv->obj_cache[PIV_OBJ_DISCOVERY].obj_data, arbuf, rbuflen);
-
-		r = piv_parse_discovery(card, rbuf, rbuflen, 0);
+		/* This should not happen  bad card */
+		sc_log(card->ctx,"Discovery not the same as previously read object");
+		r = SC_ERROR_CORRUPTED_DATA;
+		goto end;
 	}
 
+end:
+	free(rbuf);
 	LOG_FUNC_RETURN(card->ctx, r);
 }
 
@@ -5205,6 +5202,24 @@ err:
 	LOG_FUNC_RETURN(card->ctx, r);
 }
 
+static int
+piv_obj_cache_free_entry(sc_card_t *card, int enumtag, int flags)
+{
+	piv_private_data_t * priv = PIV_DATA(card);
+
+	if (priv->obj_cache[enumtag].obj_data)
+		free(priv->obj_cache[enumtag].obj_data);
+	priv->obj_cache[enumtag].obj_data = NULL;
+	priv->obj_cache[enumtag].obj_len = 0;
+
+	if (priv->obj_cache[enumtag].internal_obj_data)
+		free(priv->obj_cache[enumtag].internal_obj_data);
+	priv->obj_cache[enumtag].internal_obj_data = NULL;
+	priv->obj_cache[enumtag].internal_obj_len = 0;
+	priv->obj_cache[enumtag].flags = flags;
+
+return SC_SUCCESS;
+}
 
 static int
 piv_finish(sc_card_t *card)
@@ -5225,10 +5240,7 @@ piv_finish(sc_card_t *card)
 		if (priv->offCardCertURL)
 			free(priv->offCardCertURL);
 		for (i = 0; i < PIV_OBJ_LAST_ENUM - 1; i++) {
-			if (priv->obj_cache[i].obj_data)
-				free(priv->obj_cache[i].obj_data);
-			if (priv->obj_cache[i].internal_obj_data)
-				free(priv->obj_cache[i].internal_obj_data);
+			piv_obj_cache_free_entry(card, i, 0);
 		}
 #ifdef ENABLE_PIV_SM
 		piv_clear_cvc_content(&priv->sm_cvc);
@@ -5445,9 +5457,9 @@ static int piv_match_card_continued(sc_card_t *card)
 
 	/* first test if PIV is active applet without using AID If fails use the AID */
 
-	/* TODO If user forced it, or we discovery is useless, skip piv_find_discovery */
 	r = piv_find_discovery(card);
 	if (r < 0) {
+		piv_obj_cache_free_entry(card, PIV_OBJ_DISCOVERY, 0); /* don't cache  on failure */
 		r = piv_find_aid(card);
 	}
 	
@@ -5638,10 +5650,9 @@ static int piv_match_card_continued(sc_card_t *card)
 		 */
 		r2 = piv_find_discovery(card);
 
-		/* TODO also copy up before first test for discovery */
 		if (r2 < 0) {
 			priv->card_issues |= CI_DISCOVERY_USELESS;
-			priv->obj_cache[PIV_OBJ_DISCOVERY].flags |= PIV_OBJ_CACHE_NOT_PRESENT;
+			piv_obj_cache_free_entry(card, PIV_OBJ_DISCOVERY,PIV_OBJ_CACHE_NOT_PRESENT);
 		}
 	}
 
