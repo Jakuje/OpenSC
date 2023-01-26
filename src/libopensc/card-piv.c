@@ -1779,14 +1779,12 @@ static int piv_general_io(sc_card_t *card, int ins, int p1, int p2,
 	/* with new adpu.c and chaining, this actually reads the whole object */
 	r = sc_transmit_apdu(card, &apdu);
 
-	/* TODO If r== SC_ERROR_SM_INVALID_CHECKSUM may need to restart SM */
 	/* adpu will not have sw1,sw2 set because sc_sm_single_transmit called sc_sm_stop, */
 	if (r < 0) {
 		sc_log(card->ctx, "Transmit failed");
 		goto err;
 	}
 
-	/* TODO Check this: with SM active, if other process interferes, 69 88 is returned */
 	if (apdu.sw1 == 0x69 && apdu.sw2 ==  0x88)
 		r = SC_ERROR_SM_INVALID_SESSION_KEY;
 	else
@@ -2391,7 +2389,6 @@ static int piv_sm_open(struct sc_card *card)
 		memcpy(IDsicc, hash, sizeof(IDsicc)); /* left 8 bytes */
 	}
 
-	/* TODO check Ciss uses same curve as ours will fail to authenticate if different */
 	/* Step H7 get the cards public key Qsicc into OpenSSL Cicc_eckey */
 
 #if OPENSSL_VERSION_NUMBER < 0x30000000L
@@ -2704,7 +2701,6 @@ static int piv_generate_key(sc_card_t *card,
 		case 0x05: keydata->key_bits = 3072; break;
 		case 0x06: keydata->key_bits = 1024; break;
 		case 0x07: keydata->key_bits = 2048; break;
-		/* TODO: - DEE For EC, also set the curve parameter as the OID */
 		case 0x11: keydata->key_bits = 0;
 			keydata->ecparam = 0; /* we only support prime256v1 for 11 */
 			keydata->ecparam_len =0;
@@ -4131,7 +4127,6 @@ static int piv_general_external_authenticate(sc_card_t *card,
 	}
 
 	/* Store this to sanity check that plaintext length and ciphertext lengths match */
-	/* TODO is this required */
 	tmplen = challenge_len;
 
 	/* Encrypt the challenge with the secret */
@@ -4300,8 +4295,6 @@ piv_get_serial_nr_from_CHUI(sc_card_t* card, sc_serial_number_t* serial)
 			sc_log(card->ctx,
 					"fascn=%p,fascnlen=%"SC_FORMAT_LEN_SIZE_T"u,guid=%p,guidlen=%"SC_FORMAT_LEN_SIZE_T"u,gbits=%2.2x",
 					fascn, fascnlen, guid, guidlen, gbits);
-
-			/* TODO start using GUID for 800-73-4 cards */
 
 			if (fascn && fascnlen == 25) {
 				/* test if guid and the fascn starts with ;9999 (in ISO 4bit + parity code) */
@@ -4779,7 +4772,7 @@ static int piv_parse_discovery(sc_card_t *card, u8 * rbuf, size_t rbuflen, int a
 		aidlen = 0;
 		aid = sc_asn1_find_tag(card->ctx, body, bodylen, 0x4F, &aidlen);
 		if (aid == NULL || aidlen < piv_aids[0].len_short ||
-			memcmp(aid,piv_aids[0].value,piv_aids[0].len_short) != 0) { /*TODO look at long */
+			memcmp(aid,piv_aids[0].value,piv_aids[0].len_short) != 0) {
 			sc_log(card->ctx, "Discovery object not PIV");
 			r = SC_ERROR_INVALID_CARD; /* This is an error */
 			goto err;
@@ -5023,7 +5016,7 @@ piv_process_history(sc_card_t *card)
 			num = sc_asn1_find_tag(card->ctx, body, bodylen, 0xC1, &numlen);
 			if (num) {
 				if (numlen != 1 || *num > PIV_OBJ_RETIRED_X509_20-PIV_OBJ_RETIRED_X509_1+1) {
-					r = SC_ERROR_INTERNAL; /* TODO some other error */
+					r = SC_ERROR_INVALID_ASN1_OBJECT;
 					goto err;
 				}
 
@@ -5034,7 +5027,7 @@ piv_process_history(sc_card_t *card)
 			num = sc_asn1_find_tag(card->ctx, body, bodylen, 0xC2, &numlen);
 			if (num) {
 				if (numlen != 1 || *num > PIV_OBJ_RETIRED_X509_20-PIV_OBJ_RETIRED_X509_1+1) {
-					r = SC_ERROR_INTERNAL; /* TODO some other error */
+					r = SC_ERROR_INVALID_ASN1_OBJECT;
 					goto err;
 				}
 
@@ -5148,13 +5141,13 @@ piv_process_history(sc_card_t *card)
 			if ((tmplen = sc_asn1_put_tag(0x70, NULL, certlen, NULL, 0, NULL)) <= 0 ||
 			    (tmplen2 = sc_asn1_put_tag(0x71, NULL, 1, NULL, 0, NULL)) <= 0 ||
 			    (tmplen3 = sc_asn1_put_tag(0xFE, NULL, 0, NULL, 0, NULL)) <= 0) {
-				r = SC_ERROR_INTERNAL;
+				r = SC_ERROR_INVALID_ASN1_OBJECT;
 				goto err;
 			}
 			i2 = tmplen + tmplen2 + tmplen3;
 			tmplen = sc_asn1_put_tag(0x53, NULL, i2, NULL, 0, NULL);
 			if (tmplen <= 0) {
-				r = SC_ERROR_INTERNAL;
+				r = SC_ERROR_INVALID_ASN1_OBJECT;
 				goto err;
 			}
 
