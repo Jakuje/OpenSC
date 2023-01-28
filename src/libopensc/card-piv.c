@@ -5424,13 +5424,8 @@ static int piv_match_card_continued(sc_card_t *card)
 #endif /* ENABLE_PIV_SM */
 
 	/* see if contactless */
-	if (card->reader->atr.len >= 4
-			&& card->reader->atr.value[0] == 0x3b
-			&& (card->reader->atr.value[1] & 0xF0) == 0x80
-			&& card->reader->atr.value[2] == 0x80
-			&& card->reader->atr.value[3] == 0x01) {
+	if (card->reader->atr_info.contactless)
 		priv->init_flags |= PIV_INIT_CONTACTLESS;
-	}
 
 	for (i=0; i < PIV_OBJ_LAST_ENUM -1; i++)
 		if(piv_objects[i].flags & PIV_OBJECT_NOT_PRESENT)
