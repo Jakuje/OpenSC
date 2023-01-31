@@ -1958,7 +1958,7 @@ static int piv_sm_verify_certs(struct sc_card *card)
 	/*
 	 * Get the PIV_OBJ_SM_CERT_SIGNER and optional sm_in_cvc in cache
 	 * both are in same object. Rbuf, and rbuflen are needed but not used here
-	 * sm_cvc and sm_in_cvc both have EC_keys sm_in_cvc may have RSA sginature
+	 * sm_cvc and sm_in_cvc both have EC_keys sm_in_cvc may have RSA signature
 	 */
 	r = piv_get_cached_data(card, PIV_OBJ_SM_CERT_SIGNER, &rbuf, &rbuflen);
 	if (r < 0) {
@@ -5456,7 +5456,7 @@ static int piv_match_card_continued(sc_card_t *card)
 		goto err;
 	}
 
-	 /*  TODO Move up as discovery is useless Get Yubico version. Assumes all Yubikey cards are identified via ATR Historic bytes */
+	 /* Assumes all Yubikey cards are identified via ATR Historic bytes */
 	switch (card->type) {
 		case SC_CARD_TYPE_PIV_II_NEO:
 		case SC_CARD_TYPE_PIV_II_YUBIKEY4:
