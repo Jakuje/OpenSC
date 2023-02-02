@@ -5256,6 +5256,7 @@ static int piv_match_card(sc_card_t *card)
 	/* user provided card type must be one we know */
 	switch (card->type) {
 		case -1:
+		case SC_CARD_TYPE_PIV_II_BASE:
 		case SC_CARD_TYPE_PIV_II_GENERIC:
 		case SC_CARD_TYPE_PIV_II_HIST:
 		case SC_CARD_TYPE_PIV_II_NEO:
@@ -5271,7 +5272,6 @@ static int piv_match_card(sc_card_t *card)
 		case SC_CARD_TYPE_PIV_II_800_73_4:
 			break;
 		default:
-			/* User can not set SC_CARD_TYPE_PIV_II_BASE */
 			return 0; /* can not handle the card */
 	}
 
@@ -5527,17 +5527,20 @@ static int piv_match_card_continued(sc_card_t *card)
 	}
 	sc_debug(card->ctx,SC_LOG_DEBUG_MATCH, "PIV_MATCH card->type:%d r2:%d CI:%08x r:%d\n", card->type, r2, priv->card_issues, r);
 
-	/* AID also says if SM is supported or not */
+	/* Read AID if needed for these cards types */
 	if (!(priv->init_flags & PIV_INIT_AID_PARSED)) {
 		switch(card->type) {
 			case SC_CARD_TYPE_PIV_II_BASE:
 			case SC_CARD_TYPE_PIV_II_800_73_4:
 				r2 = piv_find_aid(card);
-				if (priv->init_flags & PIV_INIT_AID_AC) {
-					card->type = SC_CARD_TYPE_PIV_II_800_73_4;
-				}
 		}
 	}
+
+	/* If SM is supported, set SC_CARD_TYPE_PIV_II_800_73_4 */
+	if (priv->init_flags & PIV_INIT_AID_AC) {
+		card->type = SC_CARD_TYPE_PIV_II_800_73_4;
+	}
+
 	sc_debug(card->ctx,SC_LOG_DEBUG_MATCH, "PIV_MATCH card->type:%d r2:%d CI:%08x r:%d\n", card->type, r2, priv->card_issues, r);
 
 #ifdef ENABLE_PIV_SM
@@ -5546,6 +5549,7 @@ static int piv_match_card_continued(sc_card_t *card)
 		card->type = SC_CARD_TYPE_PIV_II_800_73_4;
 	}
 #endif
+	sc_debug(card->ctx,SC_LOG_DEBUG_MATCH, "PIV_MATCH card->type:%d r2:%d CI:%08x r:%d\n", card->type, r2, priv->card_issues, r);
 
 	/*
 	 * Set card_issues flags based card->type and version numbers if available.
