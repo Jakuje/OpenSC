@@ -1619,7 +1619,7 @@ static int piv_load_options(sc_card_t *card)
 			if (priv->max_object_size < PIV_MAX_OBJECT_SIZE)
 				priv->max_object_size = PIV_MAX_OBJECT_SIZE;
 			else
-				priv->max_object_size = MAX_FILE_SIZE; /* conserative value if error */
+				priv->max_object_size = MAX_FILE_SIZE; /* conservative value if error */
 		} else
 			piv_max_object_size_found = 1;
 		sc_log(card->ctx," priv->max_object_size:%d", priv->max_object_size);
