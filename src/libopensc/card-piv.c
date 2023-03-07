@@ -183,6 +183,13 @@ enum {
 #define PIV_CS_CS7		0x2E
 
 #ifdef ENABLE_PIV_SM
+/* TODO temp to test with or without LIBCTX PR */
+#ifdef USE_OPENSSL3_LIBCTX
+#define PIV_LIBCTX card->ctx->ossl3ctx->libctx
+#else
+#define PIV_LIBCTX NULL
+#endif
+
 	/* Table 14 and other constants */
 	typedef struct cipher_suite {
 		u8 id; /* taken from AID "AC" tag */
@@ -916,7 +923,7 @@ static int piv_encode_apdu(sc_card_t *card, sc_apdu_t *plain, sc_apdu_t *sm_apdu
 		goto err;
 	}
 #else
-	mac = EVP_MAC_fetch(NULL, "cmac", NULL);
+	mac = EVP_MAC_fetch(PIV_LIBCTX, "cmac", NULL);
 	cmac_params_n = 0;
 	cmac_params[cmac_params_n++] = OSSL_PARAM_construct_utf8_string("cipher", cs->cipher_cbc_name, 0);
 	cmac_params[cmac_params_n] = OSSL_PARAM_construct_end();
@@ -1248,7 +1255,7 @@ static int piv_decode_apdu(sc_card_t *card, sc_apdu_t *plain, sc_apdu_t *sm_apdu
 		goto err;
 	}
 #else
-	mac = EVP_MAC_fetch(NULL, "cmac", NULL);
+	mac = EVP_MAC_fetch(PIV_LIBCTX, "cmac", NULL);
 	cmac_params[cmac_params_n++] = OSSL_PARAM_construct_utf8_string("cipher", cs->cipher_cbc_name, 0);
 	cmac_params[cmac_params_n] = OSSL_PARAM_construct_end();
 	if (mac == NULL || (cmac_ctx = EVP_MAC_CTX_new(mac)) == NULL) {
@@ -2022,7 +2029,7 @@ static int piv_sm_verify_certs(struct sc_card *card)
 				priv->sm_in_cvc.publicPoint, priv->sm_in_cvc.publicPointlen);
 		params[params_n] = OSSL_PARAM_construct_end();
 
-		if (!(in_cvc_pkey_ctx = EVP_PKEY_CTX_new_from_name(NULL, "EC", NULL))
+		if (!(in_cvc_pkey_ctx = EVP_PKEY_CTX_new_from_name(PIV_LIBCTX, "EC", NULL))
 				|| !EVP_PKEY_fromdata_init(in_cvc_pkey_ctx)
 				|| !EVP_PKEY_fromdata(in_cvc_pkey_ctx, &in_cvc_pkey, EVP_PKEY_PUBLIC_KEY, params)
 				|| !in_cvc_pkey) {
@@ -2222,7 +2229,7 @@ static int piv_sm_open(struct sc_card *card)
 	eph_params[eph_params_n++] = OSSL_PARAM_construct_utf8_string( "group", cs->curve_group, 0);
 	eph_params[eph_params_n++] = OSSL_PARAM_construct_utf8_string( "point-format","uncompressed", 0);
 	eph_params[eph_params_n] = OSSL_PARAM_construct_end();
-	if (!(eph_ctx = EVP_PKEY_CTX_new_from_name(NULL, "EC", NULL))  /* TODO should be FIPS */
+	if (!(eph_ctx = EVP_PKEY_CTX_new_from_name(PIV_LIBCTX, "EC", NULL))  /* TODO should be FIPS */
 			|| !EVP_PKEY_keygen_init(eph_ctx)
 			|| !EVP_PKEY_CTX_set_params(eph_ctx, eph_params)
 			|| !EVP_PKEY_generate(eph_ctx, &eph_pkey)
@@ -2586,7 +2593,7 @@ static int piv_sm_open(struct sc_card *card)
 			goto err;
 		}
 #else
-		mac = EVP_MAC_fetch(NULL, "cmac", NULL);
+		mac = EVP_MAC_fetch(PIV_LIBCTX, "cmac", NULL);
 		cmac_params[cmac_params_n++] = OSSL_PARAM_construct_utf8_string("cipher", cs->cipher_cbc_name, 0);
 
 		cmac_params[cmac_params_n] = OSSL_PARAM_construct_end();
