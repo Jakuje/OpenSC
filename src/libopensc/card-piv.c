@@ -1317,7 +1317,7 @@ static int piv_decode_apdu(sc_card_t *card, sc_apdu_t *plain, sc_apdu_t *sm_apdu
 		p = ee.value;
 		inlen = ee.len;
 		if (inlen < 17 || *p != 0x01) { /*padding indicator is required */
-			sc_log(card->ctx, "SM padding indicatior not 0x01");
+			sc_log(card->ctx, "SM padding indicator not 0x01");
 			r = SC_ERROR_SM_AUTHENTICATION_FAILED;
 			goto err;
 		}
