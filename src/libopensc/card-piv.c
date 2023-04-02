@@ -861,6 +861,26 @@ static int piv_is_expected_tag(unsigned int cla, unsigned int tag, unsigned int 
 }
 
 #ifdef ENABLE_PIV_SM
+static void piv_inc(u8 *counter, size_t size);
+static int piv_encode_apdu(sc_card_t *card, sc_apdu_t *plain, sc_apdu_t *sm_apdu);
+static int piv_get_sm_apdu(sc_card_t *card, sc_apdu_t *plain, sc_apdu_t **sm_apdu);
+static int piv_free_sm_apdu(sc_card_t *card, sc_apdu_t *plain, sc_apdu_t **sm_apdu);
+static int piv_get_asn1_obj(sc_context_t *ctx, void *arg,  const u8 *obj, size_t len, int depth);
+static int piv_sm_open(struct sc_card *card);
+static int piv_decode_apdu(sc_card_t *card, sc_apdu_t *plain, sc_apdu_t *sm_apdu);
+static int piv_sm_close(sc_card_t *card);
+static void piv_clear_cvc_content(piv_cvc_t *cvc);
+static void piv_clear_sm_session(piv_sm_session_t *session);
+static int piv_decode_cvc(sc_card_t * card, u8 **buf, size_t *buflen, piv_cvc_t *cvc);
+static int piv_parse_pairing_code(sc_card_t *card, const char *option);
+static int Q2OS(int fsize, u8 *Q, size_t Qlen, u8 * OS, size_t *OSlen);
+static int piv_send_vci_pairing_code(struct sc_card *card, u8 *paring_code);
+static int piv_sm_verify_sig(struct sc_card *card, const EVP_MD *type,
+		EVP_PKEY *pkey, u8 *data, size_t data_size,
+		unsigned char *sig, size_t siglen);
+static int piv_sm_verify_certs(struct sc_card *card);
+
+
 static void piv_inc(u8 *counter, size_t size)
 {
 	unsigned int c = 1;
@@ -1590,7 +1610,7 @@ static int piv_decode_cvc(sc_card_t * card, u8 **buf, size_t *buflen,
 }
 
 
-int piv_parse_pairing_code(sc_card_t *card, const char *option)
+static int piv_parse_pairing_code(sc_card_t *card, const char *option)
 {
 	size_t i;
 
