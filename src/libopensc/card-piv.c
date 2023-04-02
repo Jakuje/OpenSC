@@ -1151,6 +1151,7 @@ static int piv_get_sm_apdu(sc_card_t *card, sc_apdu_t *plain, sc_apdu_t **sm_apd
 	r = piv_encode_apdu(card, plain, *sm_apdu);
 	if (r < 0 && *sm_apdu) {
 		free((*sm_apdu)->resp);
+		free((unsigned char **)(*sm_apdu)->data); /* data was build by piv_encode_apdu */
 		free(*sm_apdu);
 		*sm_apdu = NULL;
 	}
@@ -1551,7 +1552,11 @@ static int piv_decode_cvc(sc_card_t * card, u8 **buf, size_t *buflen,
 	sc_format_asn1_entry(asn1_piv_cvc, &asn1_piv_cvc_body, NULL, 1);
 
 	r = sc_asn1_decode(card->ctx, asn1_piv_cvc, *buf, *buflen, NULL, NULL) ; /*(const u8 **) &buf_tmp, &len);*/
-	LOG_TEST_RET(card->ctx, r, "Could not decode card verifiable certificate");
+	if (r < 0) {
+		piv_clear_cvc_content(cvc);
+		sc_log(card->ctx, "Could not decode card verifiable certificate");
+		LOG_FUNC_RETURN(card->ctx, r);
+	}
 
 	cvc->signaturelen = signaturebits / 8;
 
