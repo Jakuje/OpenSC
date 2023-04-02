@@ -2118,7 +2118,6 @@ static int piv_sm_open(struct sc_card *card)
 	piv_private_data_t * priv = PIV_DATA(card);
 	cipher_suite_t *cs = priv->cs;
 	int r = 0;
-	int rc = 0;
 	int i;
 	int reps;
 	u8 CBh;
@@ -2632,8 +2631,7 @@ static int piv_sm_open(struct sc_card *card)
 		}
 #endif
 
-		rc = memcmp(AuthCryptogram, Check_AuthCryptogram, cs->AuthCryptogramlen);
-		if (rc == 0) {
+		if (0 == memcmp(AuthCryptogram, Check_AuthCryptogram, cs->AuthCryptogramlen)) {
 			sc_log(card->ctx,"AuthCryptogram compare");
 			r = 0;
 		} else {
