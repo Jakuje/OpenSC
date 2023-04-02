@@ -1170,10 +1170,7 @@ static int piv_get_sm_apdu(sc_card_t *card, sc_apdu_t *plain, sc_apdu_t **sm_apd
 
 	r = piv_encode_apdu(card, plain, *sm_apdu);
 	if (r < 0 && *sm_apdu) {
-		free((*sm_apdu)->resp);
-		free((unsigned char **)(*sm_apdu)->data); /* data was build by piv_encode_apdu */
-		free(*sm_apdu);
-		*sm_apdu = NULL;
+		piv_free_sm_apdu(card, NULL, sm_apdu);
 	}
 
 	LOG_FUNC_RETURN(card->ctx, r);
