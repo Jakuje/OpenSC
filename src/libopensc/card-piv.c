@@ -2637,6 +2637,7 @@ static int piv_sm_open(struct sc_card *card)
 		} else {
 			sc_log(card->ctx,"AuthCryptogram compare failed");
 			r = SC_ERROR_SM_AUTHENTICATION_FAILED;
+			goto err;
 		}
 	}
 
