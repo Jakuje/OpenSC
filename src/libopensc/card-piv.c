@@ -1356,7 +1356,7 @@ static int piv_decode_apdu(sc_card_t *card, sc_apdu_t *plain, sc_apdu_t *sm_apdu
 		 */
 
 		inlen -= 16;
-		if (plain->resplen < (unsigned) inlen) {
+		if (plain->resplen < (unsigned) inlen || plain->resp == NULL) {
 			sc_log(card->ctx, "SM response will not fit in resp,resplen");
 			r = SC_ERROR_SM_AUTHENTICATION_FAILED;
 			goto err;
