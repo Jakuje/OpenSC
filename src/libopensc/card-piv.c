@@ -1250,6 +1250,11 @@ static int piv_decode_apdu(sc_card_t *card, sc_apdu_t *plain, sc_apdu_t *sm_apdu
 		goto err;
 	}
 
+	/* if no data returned clear plain resplen */
+	if (!(asn1_sm_response[0].flags & SC_ASN1_PRESENT)) {
+		plain->resplen = 0;
+	}
+
 	if ((asn1_sm_response[1].flags & SC_ASN1_PRESENT) == 0
 			|| (asn1_sm_response[2].flags & SC_ASN1_PRESENT) == 0) {
 		sc_log(card->ctx,"SM missing status or R-MAC");
