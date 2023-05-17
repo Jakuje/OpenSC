@@ -850,17 +850,6 @@ int _sc_parse_atr(sc_reader_t *reader)
 		sc_log(reader->ctx, "invalid sync byte in ATR: 0x%02X\n", p[0]);
 		return SC_ERROR_INTERNAL;
 	}
-
-	/* see if contactless */
-	if (atr_len >= 4
-			&& p[0] == 0x3b
-			&& (p[1] & 0xF0) == 0x80
-			&& p[2] == 0x80
-			&& p[3] == 0x01) {
-		reader->atr_info.contactless = 1;
-	} else 
-		reader->atr_info.contactless = 0;
-
 	n_hist = p[1] & 0x0F;
 	x = p[1] >> 4;
 	p += 2;

@@ -409,7 +409,6 @@ typedef struct sc_reader {
 		size_t hist_bytes_len;
 		int Fi, f, Di, N;
 		u8 FI, DI;
-		u8 contactless;
 	} atr_info;
 } sc_reader_t;
 
