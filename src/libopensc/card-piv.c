@@ -1385,7 +1385,7 @@ static int piv_decode_apdu(sc_card_t *card, sc_apdu_t *plain, sc_apdu_t *sm_apdu
 		}
 
 		/* unpad last block and get bytes in last block */
-		for (i = 15; i >=  0 ; i--) {
+		for (i = 15; i >  0 ; i--) {
 			if (lastb[i] == 0x80)
 				break;
 			if (lastb[i] == 0x00)
