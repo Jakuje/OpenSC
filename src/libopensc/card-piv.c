@@ -148,7 +148,6 @@ enum {
  * 
  */
 
-<<<<<<< HEAD
 #define PIV_OBJ_CACHE_VALID		1
 #define PIV_OBJ_CACHE_COMPRESSED	2
 #define PIV_OBJ_CACHE_NOT_PRESENT	8
