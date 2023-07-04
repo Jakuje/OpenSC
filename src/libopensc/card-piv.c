@@ -61,6 +61,7 @@
 #if defined(ENABLE_OPENSSL) && defined(ENABLE_SM) && !defined(OPENSSL_NO_EC) && !defined(LIBRESSL_VERSION_NUMBER) && OPENSSL_VERSION_NUMBER >= 0x10100000L
 #define ENABLE_PIV_SM
 #include <openssl/cmac.h>
+#include "compression.h"
 #endif
 
 #include "internal.h"
@@ -1960,8 +1961,10 @@ static int piv_sm_verify_certs(struct sc_card *card)
 	piv_private_data_t * priv = PIV_DATA(card);
 	cipher_suite_t *cs = priv->cs;
 	int r = 0;
-	const u8 *cert_blob  = {0};
+	u8 *cert_blob_unzipped = NULL; /* free */
+	u8 *cert_blob = NULL; /* do not free */
 	size_t cert_bloblen = 0;
+
 	u8 *rbuf; /* do not free*/
 	size_t rbuflen;
 	X509 *cert = NULL;
@@ -2007,15 +2010,33 @@ static int piv_sm_verify_certs(struct sc_card *card)
 	priv->sm_flags |= PIV_SM_FLAGS_SM_CERT_SIGNER_PRESENT; /* set for debugging */
 
 	/* get PIV_OBJ_SM_CERT_SIGNER cert DER  from cache */
-	cert_blob = priv->obj_cache[PIV_OBJ_SM_CERT_SIGNER].internal_obj_data;
-	cert_bloblen = priv->obj_cache[PIV_OBJ_SM_CERT_SIGNER].internal_obj_len;
+	if (priv->obj_cache[PIV_OBJ_SM_CERT_SIGNER].flags & PIV_OBJ_CACHE_COMPRESSED) {
+#ifdef ENABLE_ZLIB
+		if (SC_SUCCESS != sc_decompress_alloc(&cert_blob_unzipped, &cert_bloblen,
+				priv->obj_cache[PIV_OBJ_SM_CERT_SIGNER].internal_obj_data,
+				priv->obj_cache[PIV_OBJ_SM_CERT_SIGNER].internal_obj_len,
+				COMPRESSION_AUTO)) {
+			sc_log(card->ctx, "PIV decompression of SM CERT_SIGNER failed");
+			r = SC_ERROR_OBJECT_NOT_VALID;
+			goto err;
+		}
+		cert_blob = cert_blob_unzipped;
+#else
+		sc_log(card->ctx, "PIV compression not supported, no zlib");
+		LOG_FUNC_RETURN(card->ctx, SC_ERROR_NOT_SUPPORTED);
+#endif
+	
+	} else {
+		cert_blob = priv->obj_cache[PIV_OBJ_SM_CERT_SIGNER].internal_obj_data;
+		cert_bloblen = priv->obj_cache[PIV_OBJ_SM_CERT_SIGNER].internal_obj_len;
+	}
 
 	if (cert_blob == NULL || cert_bloblen == 0) {
 		r = SC_ERROR_SM_AUTHENTICATION_FAILED;
 		goto err;
 	}
 
-	if ((cert = d2i_X509(NULL, &cert_blob, cert_bloblen)) == NULL
+	if ((cert = d2i_X509(NULL, (const u8 **)&cert_blob, cert_bloblen)) == NULL
 			|| (cert_pkey = X509_get0_pubkey(cert)) == NULL) {
 		sc_log(card->ctx,"OpenSSL failed to get pubkey from SM_CERT_SIGNER");
 		piv_log_openssl(card->ctx);
@@ -2099,6 +2120,8 @@ static int piv_sm_verify_certs(struct sc_card *card)
 	 */
 err:
 	X509_free(cert);
+	free(cert_blob_unzipped);
+
 #if OPENSSL_VERSION_NUMBER < 0x30000000L
 	EC_GROUP_free(in_cvc_group);
 	EC_POINT_free(in_cvc_point);
