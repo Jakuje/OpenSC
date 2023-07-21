@@ -39,7 +39,7 @@
 #endif
 
 #ifdef ENABLE_OPENSSL
-	/* openssl needed for card administration */
+	/* openssl needed for card administration and SM */
 #include <openssl/evp.h>
 #include <openssl/bio.h>
 #include <openssl/pem.h>
