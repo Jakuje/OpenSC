@@ -1700,7 +1700,7 @@ static int piv_load_options(sc_card_t *card)
 #ifdef ENABLE_PIV_SM
 
 /*
- * FIXME TODO - Names and locations of piv_pairing_code and piv_use_sm are likey to change in the future.
+ * FIXME TODO - Names and locations of piv_pairing_code and piv_use_sm are likely to change in the future.
  * See https://github.com/OpenSC/OpenSC/pull/2053/files#r1267388721
  */
 			/*

@@ -237,7 +237,7 @@ app default {
 		# piv_max_object_size = 16384;
 		# May be set via environment: PIV_MAX_OBJECT_SIZE=16384
 
-		# *NOTE* The following are only useable if OpenSC is built with CPPFLAGS=-DENABLE_PIV_SM
+		# *NOTE* The following are only useble if OpenSC is built with CPPFLAGS=-DENABLE_PIV_SM
 		# The names and locations are likely to change in the future
 		# See: https://github.com/OpenSC/OpenSC/pull/2053/files#r1267388721
 
