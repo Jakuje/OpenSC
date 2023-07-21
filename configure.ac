@@ -259,6 +259,13 @@ AC_ARG_ENABLE(
 )
 
 AC_ARG_ENABLE(
+	[piv-sm],
+	[AS_HELP_STRING([--enable-piv-sm],[enable SM in PIV card driver linkage @<:@disabled@:>@])],
+	,
+	[enable_piv_sm="no"]
+)
+
+AC_ARG_ENABLE(
 	[man],
 	[AS_HELP_STRING([--disable-man],[disable installation of manuals @<:@enabled for none Windows@:>@])],
 	,
@@ -844,6 +851,10 @@ if test "${enable_openpace}" = "yes"; then
 else
 	OPENPACE_CFLAGS=""
 	OPENPACE_LIBS=""
+fi
+
+if  test "${enable_piv_sm}" = "yes"; then
+	AC_DEFINE([ENABLE_PIV_SM], [1], [Enable PIV SM])
 fi
 
 if test "${enable_openct}" = "yes"; then
