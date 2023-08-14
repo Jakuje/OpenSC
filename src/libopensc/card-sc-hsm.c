@@ -36,15 +36,13 @@
 
 #include "card-sc-hsm.h"
 
-#ifdef ENABLE_SM
-#ifdef ENABLE_OPENPACE
+#if defined(ENABLE_SM) && defined(ENABLE_OPENPACE)
 #include "sm/sm-eac.h"
 #include <eac/cv_cert.h>
 #include <eac/eac.h>
 #include <eac/ta.h>
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
-#endif
 #endif
 
 
@@ -485,8 +483,7 @@ static int sc_hsm_soc_biomatch(sc_card_t *card, struct sc_pin_cmd_data *data,
 
 
 
-#ifdef ENABLE_SM
-#ifdef ENABLE_OPENPACE
+#if defined(ENABLE_SM) && defined(ENABLE_OPENPACE)
 
 static int sc_hsm_perform_chip_authentication(sc_card_t *card)
 {
@@ -605,7 +602,6 @@ static int sc_hsm_perform_chip_authentication(sc_card_t *card)
 {
 	return SC_ERROR_NOT_SUPPORTED;
 }
-#endif
 #endif
 
 
@@ -1011,6 +1007,10 @@ static int sc_hsm_set_security_env(sc_card_t *card,
 				priv->algorithm = ALGO_RSA_PKCS1;
 			}
 		} else if (env->algorithm_flags & SC_ALGORITHM_RSA_PAD_PSS) {
+			if ((env->algorithm_flags & SC_ALGORITHM_RSA_HASHES) &&
+					(((env->algorithm_flags & SC_ALGORITHM_MGF1_HASHES) >> 8) != (env->algorithm_flags & SC_ALGORITHM_RSA_HASHES))) {
+				LOG_FUNC_RETURN(card->ctx, SC_ERROR_INVALID_ARGUMENTS);
+			}
 			priv->algorithm = ALGO_RSA_PSS;
 		} else {
 			if (env->operation == SC_SEC_OPERATION_DECIPHER) {
@@ -1773,7 +1773,7 @@ static int sc_hsm_card_ctl(sc_card_t *card, unsigned long cmd, void *ptr)
 
 static int sc_hsm_init(struct sc_card *card)
 {
-#if defined(ENABLE_OPENPACE) && defined(_WIN32)
+#if defined(ENABLE_SM) && defined(ENABLE_OPENPACE) && defined(_WIN32)
 	char expanded_val[PATH_MAX];
 	size_t expanded_len = PATH_MAX;
 #endif
@@ -1784,7 +1784,9 @@ static int sc_hsm_init(struct sc_card *card)
 
 	LOG_FUNC_CALLED(card->ctx);
 
-	flags = SC_ALGORITHM_RSA_RAW|SC_ALGORITHM_RSA_PAD_PSS|SC_ALGORITHM_ONBOARD_KEY_GEN;
+	flags = SC_ALGORITHM_RSA_RAW|SC_ALGORITHM_RSA_PAD_PSS|SC_ALGORITHM_ONBOARD_KEY_GEN
+			|SC_ALGORITHM_RSA_HASH_SHA256|SC_ALGORITHM_RSA_HASH_SHA384|SC_ALGORITHM_RSA_HASH_SHA512
+			|SC_ALGORITHM_MGF1_SHA256|SC_ALGORITHM_MGF1_SHA384|SC_ALGORITHM_MGF1_SHA512;
 
 	_sc_card_add_rsa_alg(card, 1024, flags, 0);
 	_sc_card_add_rsa_alg(card, 1536, flags, 0);
@@ -1890,7 +1892,7 @@ static int sc_hsm_init(struct sc_card *card)
 	priv->EF_C_DevAut = NULL;
 	priv->EF_C_DevAut_len = 0;
 
-#ifdef ENABLE_OPENPACE
+#if defined(ENABLE_SM) && defined(ENABLE_OPENPACE)
 	EAC_init();
 #ifdef _WIN32
 	expanded_len = ExpandEnvironmentStringsA(CVCDIR, expanded_val, sizeof expanded_val);

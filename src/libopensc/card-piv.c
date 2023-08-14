@@ -4378,11 +4378,11 @@ static int piv_is_object_present(sc_card_t *card, u8 *ptr)
  * or the global pin for the card 0x00. Look at Discovery object to get this.
  * called by pkcs15-piv.c  via cardctl when setting up the pins.
  */
-static int piv_get_pin_preference(sc_card_t *card, int *ptr)
+static int piv_get_pin_preference(sc_card_t *card, int *pin_ref)
 {
 	piv_private_data_t * priv = PIV_DATA(card);
 
-	*ptr = priv->pin_preference;
+	*pin_ref = priv->pin_preference;
 	LOG_FUNC_RETURN(card->ctx, SC_SUCCESS);
 }
 
@@ -6136,8 +6136,8 @@ static int piv_logout(sc_card_t *card)
 			priv->logged_in = SC_PIN_STATE_LOGGED_OUT;
 		}
 	}
-	/* disregard the return code */
-	LOG_FUNC_RETURN(card->ctx, SC_SUCCESS);
+
+	LOG_FUNC_RETURN(card->ctx, r);
 }
 
 /*
