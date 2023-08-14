@@ -1237,6 +1237,7 @@ minidriver support:      ${enable_minidriver}
 SM support:              ${enable_sm}
 SM default module:       ${DEFAULT_SM_MODULE}
 SM default path:         $(eval eval eval echo "${DEFAULT_SM_MODULE_PATH}")
+PIV SM support:          ${enable_piv_sm}
 DNIe UI support:         ${enable_dnie_ui}
 Notification support:    ${enable_notify}
 Code coverage:           ${enable_code_coverage}
