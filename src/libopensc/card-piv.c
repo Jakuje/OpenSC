@@ -5438,7 +5438,7 @@ static int piv_match_card_continued(sc_card_t *card)
 	 * If for some reason future cards have larger objects, this value needs to
 	 * be increased here.
 	 */
-	priv->max_object_size = MAX_FILE_SIZE;
+	priv->max_object_size = MAX_FILE_SIZE - 256; /* fix SM apdu resplen issue */
 	priv->selected_obj = -1;
 	priv->pin_preference = 0x80; /* 800-73-3 part 1, table 3 */
 	/* TODO Dual CAC/PIV are bases on 800-73-1 where priv->pin_preference = 0. need to check later */
