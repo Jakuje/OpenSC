@@ -61,7 +61,7 @@ OSSL_PROVIDER *legacy_provider = NULL;
 
 const unsigned char *const_message = (unsigned char *) MESSAGE_TO_SIGN;
 
-static unsigned char *
+unsigned char *
 rsa_x_509_pad_message(const unsigned char *message,
 	unsigned long *message_length, test_cert_t *o, int encrypt)
 {
