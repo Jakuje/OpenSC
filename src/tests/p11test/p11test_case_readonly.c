@@ -103,11 +103,6 @@ int encrypt_message_openssl(test_cert_t *o, token_info_t *info, CK_BYTE *message
 	EVP_PKEY_CTX *ctx = NULL;
 
 	outlen = EVP_PKEY_size(o->key);
-	*enc_message = malloc(outlen);
-	if (*enc_message == NULL) {
-		debug_print("malloc returned null");
-		return -1;
-	}
 
 	/* Prepare padding for RSA_X_509 */
 	padding = ((mech->mech == CKM_RSA_X_509) ? RSA_NO_PADDING : RSA_PKCS1_PADDING);
