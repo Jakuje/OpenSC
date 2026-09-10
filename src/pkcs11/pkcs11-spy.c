@@ -41,7 +41,7 @@
 
 #define CRYPTOKI_EXPORTS
 #include "pkcs11-display.h"
-#include "common/libpkcs11.h"
+#include "common/libscdl.h"
 
 #define __PASTE(x,y)      x##y
 
@@ -223,9 +223,14 @@ CK_INTERFACE spy_interface = {(CK_UTF8CHAR_PTR) "PKCS 11", NULL, 0};
 static CK_RV
 init_spy(void)
 {
+	CK_RV (*c_get_function_list)(CK_FUNCTION_LIST_PTR_PTR);
+	CK_RV (*c_get_interface)(CK_UTF8CHAR_PTR, CK_VERSION_PTR, CK_INTERFACE_PTR_PTR, CK_FLAGS);
+
 	CK_FUNCTION_LIST_PTR po_v2 = NULL;
+	CK_FUNCTION_LIST_3_2_PTR po_v3 = NULL;
 	const char *output, *module;
 	CK_RV rv = CKR_GENERAL_ERROR;
+	CK_INTERFACE *interface = NULL;
 #ifdef _WIN32
         char temp_path[PATH_MAX], expanded_path[PATH_MAX];
         DWORD temp_len, expanded_len;
@@ -326,11 +331,37 @@ init_spy(void)
 		goto err;
 	}
 
-	modhandle = C_LoadModule(module, &po_v2);
+	modhandle = sc_dlopen(module);
 	if (modhandle == NULL) {
-		fprintf(spy_output, "Error: Could not load PKCS#11 interfaces from \"%s\".\n", module);
+		fprintf(spy_output, "sc_dlopen failed: %s\n", sc_dlerror());
 		rv = CKR_DEVICE_ERROR;
 		goto err;
+	}
+
+	c_get_interface = (CK_RV (*)(CK_UTF8CHAR_PTR, CK_VERSION_PTR, CK_INTERFACE_PTR_PTR, CK_FLAGS))
+		sc_dlsym(modhandle, "C_GetInterface");
+	if (c_get_interface) {
+		/* Get default PKCS #11 interface */
+		rv = c_get_interface((CK_UTF8CHAR_PTR)"PKCS 11", NULL, &interface, 0);
+		if (rv == CKR_OK) {
+			/* assume default is v3 for v3 API -- will confirm below */
+			po_v3 = (CK_FUNCTION_LIST_3_2_PTR)interface->pFunctionList;
+		} else {
+			fprintf(stderr, "C_GetInterface failed %lx, retry 2.x way\n", rv);
+		}
+	}
+
+	if (!po_v3) {
+		/* Get the list of function pointers */
+		c_get_function_list = (CK_RV (*)(CK_FUNCTION_LIST_PTR_PTR))
+					sc_dlsym(modhandle, "C_GetFunctionList");
+		if (!c_get_function_list)
+			goto err;
+		rv = c_get_function_list(&po_v2);
+		if (rv != CKR_OK) {
+			fprintf(spy_output, "C_GetFunctionList failed %lx\n", rv);
+			goto err;
+		}
 	}
 
 	/* Make sure we do not overrun underlying list if broken
@@ -343,12 +374,18 @@ init_spy(void)
 		goto err;
 	}
 
-	if (po_v2->version.major < 3) {
+	if (po_v2) {
+		/* GetFuntionList does not have a reason to return V3 function list */
 		memcpy(po, po_v2, sizeof(CK_FUNCTION_LIST));
-	} else if (po_v2->version.minor < 2) {
-		memcpy(po, (CK_FUNCTION_LIST_3_0_PTR)po_v2, sizeof(CK_FUNCTION_LIST_3_0));
+	} else if (po_v3->version.major < 3) {
+		/* GetInterface can return just V2 function list -- do not overrun buffer! */
+		memcpy(po, po_v3, sizeof(CK_FUNCTION_LIST));
+	} else if (po_v3->version.minor < 2) {
+		/* GetInterface can return just V3.0 function list -- do not overrun buffer! */
+		memcpy(po, (CK_FUNCTION_LIST_3_0_PTR)po_v3, sizeof(CK_FUNCTION_LIST_3_0));
 	} else {
-		memcpy(po, (CK_FUNCTION_LIST_3_2_PTR)po_v2, sizeof(CK_FUNCTION_LIST_3_2));
+		/* 3.2 has all functions */
+		memcpy(po, po_v3, sizeof(CK_FUNCTION_LIST_3_2));
 	}
 	fprintf(spy_output, "Loaded: \"%s\"\n", module);
 
@@ -356,7 +393,7 @@ init_spy(void)
 
 err:
 	po = NULL;
-	C_UnloadModule(modhandle);
+	sc_dlclose(modhandle);
 	modhandle = NULL;
 	free(pkcs11_spy);
 	pkcs11_spy = NULL;
