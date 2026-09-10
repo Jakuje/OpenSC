@@ -343,7 +343,13 @@ init_spy(void)
 		goto err;
 	}
 
-	memcpy(po, po_v2, sizeof(CK_FUNCTION_LIST));
+	if (po_v2->version.major < 3) {
+		memcpy(po, po_v2, sizeof(CK_FUNCTION_LIST));
+	} else if (po_v2->version.minor < 2) {
+		memcpy(po, (CK_FUNCTION_LIST_3_0_PTR)po_v2, sizeof(CK_FUNCTION_LIST_3_0));
+	} else {
+		memcpy(po, (CK_FUNCTION_LIST_3_2_PTR)po_v2, sizeof(CK_FUNCTION_LIST_3_2));
+	}
 	fprintf(spy_output, "Loaded: \"%s\"\n", module);
 
 	return CKR_OK;
@@ -1743,7 +1749,9 @@ spy_interface_function_list(CK_INTERFACE_PTR pInterface, CK_INTERFACE_PTR_PTR re
 	}
 
 	version = (CK_VERSION *)pInterface->pFunctionList;
-	if (version->major == 3 && version->minor == 0) {
+	if (version->major == 3 && version->minor >= 2) {
+		(*retInterface)->pFunctionList = pkcs11_spy_3_2;
+	} else if (version->major == 3) {
 		(*retInterface)->pFunctionList = pkcs11_spy_3_0;
 	} else {
 		(*retInterface)->pFunctionList = pkcs11_spy;
@@ -1845,8 +1853,8 @@ C_GetInterface(CK_UTF8CHAR_PTR pInterfaceName, CK_VERSION_PTR pVersion,
 	} else {
 		fprintf(spy_output, "[in] pVersion = NULL\n");
 	}
-	fprintf(spy_output, "[in] flags = %s\n",
-		(flags & CKF_INTERFACE_FORK_SAFE ? "CKF_INTERFACE_FORK_SAFE" : ""));
+	fprintf(spy_output, "[in] flags = %s (%lx)\n",
+			(flags & CKF_INTERFACE_FORK_SAFE ? "CKF_INTERFACE_FORK_SAFE" : "<UNKNOWN_VALUE>"), flags);
 	if (po->version.major >= 3 && po->C_GetInterface != NULL) {
 		CK_VERSION in_version = {0, 0};
 		CK_VERSION_PTR fakeVersion = NULL;
